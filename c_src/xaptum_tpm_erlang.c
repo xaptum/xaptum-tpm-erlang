@@ -175,7 +175,7 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
         TPM2B_MAX_NV_BUFFER nv_data = {.size=0};
 
-        ret = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
+        TSS2_RC ret = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
                                index,
                                index,
                                &sessionsData,
@@ -199,7 +199,7 @@ finish:
     Tss2_Sys_Finalize((TSS2_SYS_CONTEXT *) sapi_context_bin.data);
 
     if (ret == TSS2_RC_SUCCESS) {
-        return enif_make_tuple3(enf,
+        return enif_make_tuple3(env,
         enif_make_int(env, 0),
         enif_make_binary(env, &out_buffer_bin),
         enif_make_binary(env, &tcti_context_bin));
