@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <erl_nif.h>
 #include <tss2/tss2_sys.h>
@@ -103,9 +104,10 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                               (TSS2_TCTI_CONTEXT *) tcti_context_bin.data,
                               &abi_version);
 
-    if (TSS2_RC_SUCCESS != ret) {
+    if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error initializing TPM SAPI context\n");
         //goto finish;
+    }
 
     return enif_make_tuple3(env,
         enif_make_int(env, rc),
