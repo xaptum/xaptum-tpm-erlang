@@ -1,3 +1,5 @@
+#include <string.h>
+#include <erl_nif.h>
 #include <tss2/tss2_sys.h>
 #include <tss2/tss2_tcti_socket.h>
 
