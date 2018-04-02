@@ -170,12 +170,14 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary out_buffer_bin;
     enif_alloc_binary(size, &out_buffer_bin);
 
+    TSS2_RC ret = TSS2_RC_SUCCESS;
+
     while (size > 0) {
         uint16_t bytes_to_read = size;
 
         TPM2B_MAX_NV_BUFFER nv_data = {.size=0};
 
-        TSS2_RC ret = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
+        ret = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
                                index,
                                index,
                                &sessionsData,
