@@ -22,7 +22,7 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 }
 
 static ERL_NIF_TERM
-tss2_sys_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
 
     if(argc != 2) {
@@ -50,9 +50,15 @@ tss2_sys_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                           port.data,
                           (TSS2_TCTI_CONTEXT *) tcti_context_buffer_bin->data);
 
-    return enif_make_tuple2(env,
-    enif_make_int(env, rc),
-    enif_make_binary(env, tcti_context_buffer_bin));
+    if (rc == TSS2_RC_SUCCESS) {
+        return enif_make_tuple2(env,
+        enif_make_int(env, rc),
+        enif_make_binary(env, tcti_context_buffer_bin));
+    }
+    else{
+        fprintf(stderr, "Unable to initialize tcti socket due to error %d!\n", rc);
+        return enif_make_int(env, rc);
+    }
 }
 
 
@@ -212,7 +218,7 @@ tss2_tcti_finalize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 
 static ErlNifFunc nif_funcs[] = {
-    {"tss2_sys_initialize_socket", 2, tss2_sys_initialize_socket, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"tss2_tcti_initialize_socket", 2, tss2_tcti_initialize_socket, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"tss2_sys_initialize", 2, tss2_sys_initialize, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"tss2_tcti_finalize", 1, tss2_tcti_finalize, ERL_NIF_DIRTY_JOB_CPU_BOUND}

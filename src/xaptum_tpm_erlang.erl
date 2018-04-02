@@ -3,7 +3,7 @@
 %% API exports
 -export([
   init/0,
-  tss2_sys_initialize_socket/2,
+  tss2_tcti_initialize_socket/2,
   tss2_sys_initialize/2,
   tss2_sys_nv_read/3,
   tss2_tcti_finalize/1
@@ -34,7 +34,7 @@ priv_dir() ->
 %% NIFs
 %%====================================================================
 
-tss2_sys_initialize_socket(Hostname, Port) when is_binary(Hostname), is_binary(Port)->
+tss2_tcti_initialize_socket(Hostname, Port) when is_binary(Hostname), is_binary(Port)->
   erlang:nif_error(?LINE).
 
 tss2_sys_initialize(MaxCommandResponseSize, TctiContextBin) when is_integer(MaxCommandResponseSize), is_binary(TctiContextBin) ->
