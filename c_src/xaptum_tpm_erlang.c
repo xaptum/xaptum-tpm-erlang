@@ -5,6 +5,12 @@
 
 ErlNifResourceType* STRUCT_RESOURCE_TYPE;
 
+void
+free_resource(ErlNifEnv* env, void* obj)
+{
+   enif_free(obj);
+}
+
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
@@ -42,18 +48,18 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    ErlNifBinary *tcti_context_buffer_bin;
-    enif_alloc_binary(128, tcti_context_buffer_bin);
+    ErlNifBinary tcti_context_buffer_bin;
+    enif_alloc_binary(128, &tcti_context_buffer_bin);
 
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname.data,
                           port.data,
-                          (TSS2_TCTI_CONTEXT *) tcti_context_buffer_bin->data);
+                          (TSS2_TCTI_CONTEXT *) tcti_context_buffer_bin.data);
 
     if (rc == TSS2_RC_SUCCESS) {
         return enif_make_tuple2(env,
         enif_make_int(env, rc),
-        enif_make_binary(env, tcti_context_buffer_bin));
+        enif_make_binary(env, &tcti_context_buffer_bin));
     }
     else{
         fprintf(stderr, "Unable to initialize tcti socket due to error %d!\n", rc);
@@ -103,8 +109,8 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     return enif_make_tuple3(env,
         enif_make_int(env, rc),
-        enif_make_binary(env, sapi_context_bin),
-        enif_make_binary(env, tcti_context_bin));
+        enif_make_binary(env, &sapi_context_bin),
+        enif_make_binary(env, &tcti_context_bin));
 }
 
 static ERL_NIF_TERM
@@ -188,21 +194,20 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
 finish:
-    Tss2_Sys_Finalize(sapi_context);
-    free(sapi_context);
+    Tss2_Sys_Finalize((TSS2_SYS_CONTEXT *) sapi_context_bin.data);
 
     if (ret == TSS2_RC_SUCCESS) {
         return enif_make_tuple3(enf,
         enif_make_int(env, 0),
-        enif_make_binary(env, out_buffer_bin),
-        enif_make_binary(env, tcti_context_bin));
+        enif_make_binary(env, &out_buffer_bin),
+        enif_make_binary(env, &tcti_context_bin));
     } else {
         return enif_make_int(env,-1);
     }
 }
 
 static ERL_NIF_TERM
-tss2_tcti_finalize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+tss2_sys_finalize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
      ErlNifBinary context_bin;
 
@@ -221,7 +226,7 @@ static ErlNifFunc nif_funcs[] = {
     {"tss2_tcti_initialize_socket", 2, tss2_tcti_initialize_socket, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"tss2_sys_initialize", 2, tss2_sys_initialize, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_tcti_finalize", 1, tss2_tcti_finalize, ERL_NIF_DIRTY_JOB_CPU_BOUND}
+    {"tss2_sys_finalize", 1, tss2_sys_finalize, ERL_NIF_DIRTY_JOB_CPU_BOUND}
     };
 
 ERL_NIF_INIT(xtt_erlang, nif_funcs, &load, NULL, NULL, NULL);
