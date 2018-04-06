@@ -137,8 +137,7 @@ tss2_tcti_ptr_release(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     TSS2_TCTI_CONTEXT * tcti_context;
-    TSS2_RC rc = Tss2_Sys_GetTctiContext(sapiContext,
-                            &tctiContext);
+    TSS2_RC rc = Tss2_Sys_GetTctiContext(sapi_context, &tcti_context);
 
     if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
