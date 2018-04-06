@@ -18,7 +18,7 @@ free_resource(ErlNifEnv* env, void* obj)
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
-    const char* mod = "xaptum_tpm_erlang";
+    const char* mod = "xaptum_tpm";
     const char* name = "struct";
 
     STRUCT_RESOURCE_TYPE = enif_open_resource_type(
@@ -31,12 +31,16 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     ATOM_OK = enif_make_atom(env, "ok");
     ATOM_ERROR = enif_make_atom(env, "error");
 
+    puts("Loaded TPM NIFs");
+
     return 0;
 }
 
 static ERL_NIF_TERM
 tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+
+    puts("Running NIF tss2_tcti_initialize_socket\n");
 
     if(argc != 2) {
         return enif_make_badarg(env);
@@ -77,8 +81,10 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 static ERL_NIF_TERM
 tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-
 {
+
+    puts("Running NIF tss2_sys_initialize\n");
+
     if(argc != 1) {
         return enif_make_badarg(env);
     }
@@ -118,6 +124,8 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    puts("Running NIF tss2_sys_nv_read\n");
+
     if(argc != 3) {
         return enif_make_badarg(env);
     }
