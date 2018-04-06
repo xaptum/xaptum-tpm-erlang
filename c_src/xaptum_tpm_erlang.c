@@ -4,6 +4,9 @@
 #include <tss2/tss2_sys.h>
 #include <tss2/tss2_tcti_socket.h>
 
+ERL_NIF_TERM ATOM_OK;
+ERL_NIF_TERM ATOM_ERROR;
+
 ErlNifResourceType* STRUCT_RESOURCE_TYPE;
 
 void
@@ -24,6 +27,9 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 
     if(STRUCT_RESOURCE_TYPE == NULL)
         return -1;
+
+    ATOM_OK = enif_make_atom(env, "ok");
+    ATOM_ERROR = enif_make_atom(env, "error");
 
     return 0;
 }
@@ -59,12 +65,12 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     if (rc == TSS2_RC_SUCCESS) {
         return enif_make_tuple2(env,
-        enif_make_int(env, rc),
+        ATOM_OK,
         enif_make_binary(env, &tcti_context_buffer_bin));
     }
     else{
         fprintf(stderr, "Unable to initialize tcti socket due to error %d!\n", rc);
-        return enif_make_int(env, rc);
+        return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc)); // TODO return rc description instead of int
     }
 }
 
@@ -73,25 +79,18 @@ static ERL_NIF_TERM
 tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 {
-    if(argc != 2) {
+    if(argc != 1) {
         return enif_make_badarg(env);
     }
-
-    int maxCommandResponseSize;
-
-    if(!enif_get_int(env, argv[0], &maxCommandResponseSize)) {
-        return enif_make_badarg(env);
-    }
-
 
     ErlNifBinary tcti_context_bin;
 
-    if(!enif_inspect_binary(env, argv[1], &tcti_context_bin) ) {
+    if(!enif_inspect_binary(env, argv[0], &tcti_context_bin) ) {
         fprintf(stderr, "Bad tcti_context arg at position 1\n");
         return enif_make_badarg(env);
     }
 
-    size_t sapi_ctx_size = Tss2_Sys_GetContextSize(maxCommandResponseSize);
+    size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
     ErlNifBinary sapi_context_bin;
     enif_alloc_binary(sapi_ctx_size, &sapi_context_bin);
@@ -106,13 +105,16 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error initializing TPM SAPI context\n");
-        //goto finish;
+        return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
 
-    return enif_make_tuple3(env,
-        enif_make_int(env, rc),
-        enif_make_binary(env, &sapi_context_bin),
-        enif_make_binary(env, &tcti_context_bin));
+    return enif_make_tuple2(env,
+        ATOM_OK,
+        enif_make_tuple2(env,
+            enif_make_binary(env, &sapi_context_bin),
+            enif_make_binary(env, &tcti_context_bin)
+            )
+        );
 }
 
 static ERL_NIF_TERM
@@ -170,14 +172,14 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary out_buffer_bin;
     enif_alloc_binary(size, &out_buffer_bin);
 
-    TSS2_RC ret = TSS2_RC_SUCCESS;
+    TSS2_RC rc = TSS2_RC_SUCCESS;
 
     while (size > 0) {
         uint16_t bytes_to_read = size;
 
         TPM2B_MAX_NV_BUFFER nv_data = {.size=0};
 
-        ret = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
+        rc = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
                                index,
                                index,
                                &sessionsData,
@@ -186,9 +188,9 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                                &nv_data,
                                &sessionsDataOut);
 
-        if (ret != TSS2_RC_SUCCESS) {
+        if (rc != TSS2_RC_SUCCESS) {
             fprintf(stderr, "Error reading from NVRAM\n");
-            goto finish;
+            break;
         }
 
         size -= nv_data.size;
@@ -197,40 +199,24 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         data_offset += nv_data.size;
     }
 
-finish:
-    Tss2_Sys_Finalize((TSS2_SYS_CONTEXT *) sapi_context_bin.data);
-
-    if (ret == TSS2_RC_SUCCESS) {
-        return enif_make_tuple3(env,
-        enif_make_int(env, 0),
-        enif_make_binary(env, &out_buffer_bin),
-        enif_make_binary(env, &tcti_context_bin));
+    if (rc == TSS2_RC_SUCCESS) {
+        return enif_make_tuple2(env,
+        ATOM_OK,
+        enif_make_tuple2(
+            enif_make_binary(env, &out_buffer_bin),
+            enif_make_binary(env, &tcti_context_bin)
+            )
+        );
     } else {
-        return enif_make_int(env,-1);
+        return enif_make_tuple2(ATOM_ERROR, enif_make_int(env, rc));
     }
-}
-
-static ERL_NIF_TERM
-tss2_sys_finalize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-     ErlNifBinary context_bin;
-
-     if(!enif_inspect_binary(env, argv[2], &context_bin) ) {
-        fprintf(stderr, "Bad context arg at position 0\n");
-        return enif_make_badarg(env);
-     }
-
-     Tss2_Sys_Finalize(context_bin.data);
-
-     return enif_make_int(env, 0);
 }
 
 
 static ErlNifFunc nif_funcs[] = {
     {"tss2_tcti_initialize_socket", 2, tss2_tcti_initialize_socket, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_sys_initialize", 2, tss2_sys_initialize, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_sys_finalize", 1, tss2_sys_finalize, ERL_NIF_DIRTY_JOB_CPU_BOUND}
+    {"tss2_sys_initialize", 1, tss2_sys_initialize, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND}
     };
 
 ERL_NIF_INIT(xtt_erlang, nif_funcs, &load, NULL, NULL, NULL);
