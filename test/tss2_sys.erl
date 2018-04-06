@@ -11,8 +11,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--define(HOSTNAME, "localhost").
--define(PORT, "2321").
+-define(HOSTNAME, <<"localhost">>).
+-define(PORT, <<"2321">>).
 -define(PUB_KEY_FILE, "pub_key.txt").
 -define(HANDLE, "handle.txt").
 

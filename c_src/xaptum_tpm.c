@@ -110,7 +110,7 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                               &abi_version);
 
     if (TSS2_RC_SUCCESS != rc) {
-        fprintf(stderr, "Error initializing TPM SAPI context\n");
+        fprintf(stderr, "Error %d initializing TPM SAPI context\n", rc);
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else
@@ -180,6 +180,8 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     TSS2_RC rc = TSS2_RC_SUCCESS;
 
+    printf("Reading %d bytes from nvram\n", size);
+
     while (size > 0) {
         uint16_t bytes_to_read = size;
 
@@ -195,7 +197,7 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                                &sessionsDataOut);
 
         if (rc != TSS2_RC_SUCCESS) {
-            fprintf(stderr, "Error reading from NVRAM\n");
+            fprintf(stderr, "Error reading from NVRAM due to error %d remaining bytes %d\n", tc, size);
             break;
         }
 
