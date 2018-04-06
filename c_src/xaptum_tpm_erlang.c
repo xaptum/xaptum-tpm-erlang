@@ -107,14 +107,12 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         fprintf(stderr, "Error initializing TPM SAPI context\n");
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
-
-    return enif_make_tuple2(env,
+    else
+    return enif_make_tuple3(env,
         ATOM_OK,
-        enif_make_tuple2(env,
-            enif_make_binary(env, &sapi_context_bin),
-            enif_make_binary(env, &tcti_context_bin)
-            )
-        );
+        enif_make_binary(env, &sapi_context_bin),
+        enif_make_binary(env, &tcti_context_bin)
+    );
 }
 
 static ERL_NIF_TERM
@@ -200,15 +198,13 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     if (rc == TSS2_RC_SUCCESS) {
-        return enif_make_tuple2(env,
+        return enif_make_tuple3(env,
         ATOM_OK,
-        enif_make_tuple2(
-            enif_make_binary(env, &out_buffer_bin),
-            enif_make_binary(env, &tcti_context_bin)
-            )
+        enif_make_binary(env, &out_buffer_bin),
+        enif_make_binary(env, &tcti_context_bin)
         );
     } else {
-        return enif_make_tuple2(ATOM_ERROR, enif_make_int(env, rc));
+        return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
 }
 

@@ -31,12 +31,12 @@
 
 nv_read_test() ->
   {ok, TctiContextBin} = tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
-  {ok, {_SapiContextBin, TctiContextBin}} = tss2_sys_initialize(TctiContextBin),
+  {ok, _SapiContextBin, TctiContextBin} = tss2_sys_initialize(TctiContextBin),
 
-  {ok, {CredOutBufferBin, _TctiContextBin}} = tss2_sys_nv_read(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, TctiContextBin),
+  {ok, CredOutBufferBin, _TctiContextBin} = tss2_sys_nv_read(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, TctiContextBin),
   io:format("CRED nv read: ~p~n", [CredOutBufferBin]),
 
-  {ok, {GpkOutBufferBin, _TctiContextBin}} = tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, TctiContextBin),
+  {ok, GpkOutBufferBin, _TctiContextBin} = tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, TctiContextBin),
   io:format("GPK nv read: ~p~n", [GpkOutBufferBin]),
 
   false = true.
