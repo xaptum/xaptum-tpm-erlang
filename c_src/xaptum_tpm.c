@@ -59,18 +59,18 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    ErlNifBinary tcti_context_buffer_bin;
-    enif_alloc_binary(128, &tcti_context_buffer_bin);
+    TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, 128);
 
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname.data,
                           port.data,
-                          (TSS2_TCTI_CONTEXT *) tcti_context_buffer_bin.data);
+                          tcti_context);
 
     if (rc == TSS2_RC_SUCCESS) {
-        return enif_make_tuple2(env,
-        ATOM_OK,
-        enif_make_binary(env, &tcti_context_buffer_bin));
+        ERL_NIF_TERM tcti_resource = enif_make_resource(env, tcti_context);
+        enif_release_resource(tcti_context);
+
+        return enif_make_tuple2(env, ATOM_OK, tcti_resource);
     }
     else{
         fprintf(stderr, "Unable to initialize tcti socket due to error %d!\n", rc);
@@ -89,37 +89,67 @@ tss2_sys_initialize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    ErlNifBinary tcti_context_bin;
+    TSS2_TCTI_CONTEXT * tcti_context;
 
-    if(!enif_inspect_binary(env, argv[0], &tcti_context_bin) ) {
-        fprintf(stderr, "Bad tcti_context arg at position 1\n");
+    if(!enif_get_resource(env, argv[0], STRUCT_RESOURCE_TYPE, (void**) &tcti_context)) {
         return enif_make_badarg(env);
     }
 
     size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
-    ErlNifBinary sapi_context_bin;
-    enif_alloc_binary(sapi_ctx_size, &sapi_context_bin);
+    TSS2_SYS_CONTEXT *sapi_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, sapi_ctx_size);
 
     TSS2_ABI_VERSION abi_version = TSS2_ABI_CURRENT_VERSION;
 
     TSS2_RC rc = Tss2_Sys_Initialize(
-                              (TSS2_SYS_CONTEXT *) sapi_context_bin.data,
+                              sapi_context,
                               sapi_ctx_size,
-                              (TSS2_TCTI_CONTEXT *) tcti_context_bin.data,
+                              tcti_context,
                               &abi_version);
 
     if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error %d initializing TPM SAPI context\n", rc);
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
-    else
-    return enif_make_tuple3(env,
-        ATOM_OK,
-        enif_make_binary(env, &sapi_context_bin),
-        enif_make_binary(env, &tcti_context_bin)
-    );
+    else{
+        ERL_NIF_TERM sapi_resource = enif_make_resource(env, sapi_context);
+        // the user explicitely has to call tss2_tcti_ptr_release to call enif_release_resource on tcti_context when done with sapi which keeps a pointer to it
+        enif_keep_resource(tcti_context);
+        enif_release_resource(sapi_resource);
+        return enif_make_tuple2(env, ATOM_OK, sapi_resource);
+    }
 }
+
+static ERL_NIF_TERM
+tss2_tcti_ptr_release(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+
+    puts("Running NIF tss2_tcti_release\n");
+
+    if(argc != 1) {
+        return enif_make_badarg(env);
+    }
+
+    TSS2_SYS_CONTEXT * sapi_context;
+
+    if(!enif_get_resource(env, argv[0], STRUCT_RESOURCE_TYPE, (void**) &sapi_context)) {
+        return enif_make_badarg(env);
+    }
+
+    TSS2_TCTI_CONTEXT * tcti_context;
+    TSS2_RC rc = Tss2_Sys_GetTctiContext(sapiContext,
+                            &tctiContext);
+
+    if (TSS2_RC_SUCCESS != rc) {
+        fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
+        return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
+    }
+    else{
+        enif_release_resource(tcti_context);
+        return ATOM_OK;
+    }
+}
+
 
 static ERL_NIF_TERM
 tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -131,28 +161,20 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     uint16_t size;
-
     if(!enif_get_uint(env, argv[0], &size)) {
         return enif_make_badarg(env);
     }
 
     TPM_HANDLE index;
-
     if(!enif_get_uint(env, argv[1], &index)) {
         return enif_make_badarg(env);
     }
 
-    ErlNifBinary tcti_context_bin;
-
-    if(!enif_inspect_binary(env, argv[2], &tcti_context_bin) ) {
-        fprintf(stderr, "Bad tcti_context arg at position 2\n");
+    TSS2_SYS_CONTEXT * sapi_context;
+    if(!enif_get_resource(env, argv[2], STRUCT_RESOURCE_TYPE, (void**) &sapi_context)) {
+        fprintf(stderr, "Bad SAPI context arg at position 2\n");
         return enif_make_badarg(env);
     }
-
-    size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
-
-    ErlNifBinary sapi_context_bin;
-    enif_alloc_binary(sapi_ctx_size, &sapi_context_bin);
 
 
     TPMS_AUTH_COMMAND session_data = {
@@ -187,7 +209,7 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
         TPM2B_MAX_NV_BUFFER nv_data = {.size=0};
 
-        rc = Tss2_Sys_NV_Read((TSS2_SYS_CONTEXT *) sapi_context_bin.data,
+        rc = Tss2_Sys_NV_Read(sapi_context,
                                index,
                                index,
                                &sessionsData,
@@ -208,22 +230,20 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     if (rc == TSS2_RC_SUCCESS) {
-        return enif_make_tuple3(env,
-        ATOM_OK,
-        enif_make_binary(env, &out_buffer_bin),
-        enif_make_binary(env, &tcti_context_bin)
-        );
+        return enif_make_tuple2(env, ATOM_OK, enif_make_binary(env, &out_buffer_bin));
     } else {
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
 }
 
 
+
 static ErlNifFunc nif_funcs[] = {
     {"tss2_tcti_initialize_socket", 2, tss2_tcti_initialize_socket, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"tss2_sys_initialize", 1, tss2_sys_initialize, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND}
-    };
+    {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"tss2_tcti_ptr_release", 1, tss2_tcti_ptr_release, ERL_NIF_DIRTY_JOB_CPU_BOUND}
+};
 
 ERL_NIF_INIT(xaptum_tpm, nif_funcs, &load, NULL, NULL, NULL);
 

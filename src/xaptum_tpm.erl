@@ -5,7 +5,8 @@
   init/0,
   tss2_tcti_initialize_socket/2,
   tss2_sys_initialize/1,
-  tss2_sys_nv_read/3
+  tss2_sys_nv_read/3,
+  tss2_tcti_ptr_release/1
   ]).
 
 -export([priv_dir/0]).
@@ -36,10 +37,13 @@ priv_dir() ->
 tss2_tcti_initialize_socket(_Hostname, _Port) ->
   erlang:nif_error(?LINE).
 
-tss2_sys_initialize(_TctiContextBin) ->
+tss2_sys_initialize(_TctiContext) ->
   erlang:nif_error(?LINE).
 
-tss2_sys_nv_read(_Size, _Index, _TctiContextBin)->
+tss2_sys_nv_read(_Size, _Index, _SapiContext)->
+  erlang:nif_error(?LINE).
+
+tss2_tcti_ptr_release(_SapiContext)->
   erlang:nif_error(?LINE).
 
 %%====================================================================

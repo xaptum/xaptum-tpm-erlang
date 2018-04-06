@@ -33,14 +33,16 @@ nv_read_test() ->
 
   xaptum_tpm:init(),
 
-  {ok, TctiContextBin} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
-  {ok, _SapiContextBin, TctiContextBin} = xaptum_tpm:tss2_sys_initialize(TctiContextBin),
+  {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
+  {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
 
-  {ok, CredOutBufferBin, _TctiContextBin} = xaptum_tpm:tss2_sys_nv_read(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, TctiContextBin),
+  {ok, CredOutBufferBin} = xaptum_tpm:tss2_sys_nv_read(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, SapiContext),
   lager:info("CRED nv read: ~p", [CredOutBufferBin]),
 
-  {ok, GpkOutBufferBin, _TctiContextBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, TctiContextBin),
+  {ok, GpkOutBufferBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, SapiContext),
   lager:info("GPK nv read: ~p", [GpkOutBufferBin]),
+
+  ok = xaptum_tpm:tss2_tcti_ptr_release(SapiContext),
 
   false = true.
 
