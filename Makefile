@@ -4,6 +4,9 @@ REBAR = rebar3
 compile:
 	$(REBAR) compile
 
+xref:
+	$(REBAR) xref
+
 test: compile
 	$(REBAR) eunit
 

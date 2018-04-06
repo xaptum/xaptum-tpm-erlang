@@ -1,4 +1,4 @@
--module(xaptum_tpm_erlang).
+-module(xaptum_tpm).
 
 %% API exports
 -export([
