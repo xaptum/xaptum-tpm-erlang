@@ -61,13 +61,17 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, 128);
 
+    ErlNifBinary tcti_context_bin;
+    enif_alloc_binary(128, &tcti_context_bin);
+
+
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname.data,
                           port.data,
-                          tcti_context);
+                          (TSS2_TCTI_CONTEXT *) tcti_context_buffer_bin.data);
 
     if (rc == TSS2_RC_SUCCESS) {
-        ERL_NIF_TERM tcti_resource = enif_make_resource(env, tcti_context);
+        ERL_NIF_TERM tcti_resource = enif_make_resource_binary(env, tcti_context, &(tcti_context_bin.data), tcti_context_bin.size);
         enif_release_resource(tcti_context);
 
         return enif_make_tuple2(env, ATOM_OK, tcti_resource);
