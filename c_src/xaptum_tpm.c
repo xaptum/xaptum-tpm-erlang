@@ -63,6 +63,8 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_alloc_binary(128, &tcti_context_bin);
 
 
+    printf("Initializing socket on %s:%s", hostname.data, port.data);
+
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname.data,
                           port.data,
