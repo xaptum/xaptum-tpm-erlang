@@ -197,7 +197,7 @@ tss2_sys_nv_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                                &sessionsDataOut);
 
         if (rc != TSS2_RC_SUCCESS) {
-            fprintf(stderr, "Error reading from NVRAM due to error %d remaining bytes %d\n", tc, size);
+            fprintf(stderr, "Error reading from NVRAM due to error %d remaining bytes %d\n", rc, size);
             break;
         }
 
