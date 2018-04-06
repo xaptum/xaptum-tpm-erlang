@@ -59,8 +59,6 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, 128);
-
     ErlNifBinary tcti_context_bin;
     enif_alloc_binary(128, &tcti_context_bin);
 
@@ -71,6 +69,8 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                           (TSS2_TCTI_CONTEXT *) tcti_context_bin.data);
 
     if (rc == TSS2_RC_SUCCESS) {
+        TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, 128);
+
         ERL_NIF_TERM tcti_resource = enif_make_resource_binary(env, tcti_context, &(tcti_context_bin.data), tcti_context_bin.size);
         enif_release_resource(tcti_context);
 
