@@ -33,10 +33,10 @@ priv_dir() ->
 %% NIFs
 %%====================================================================
 
-tss2_tcti_initialize_socket(Hostname, Port) ->
+tss2_tcti_initialize_socket(_Hostname, _Port) ->
   erlang:nif_error(?LINE).
 
-tss2_sys_initialize(TctiContextBin) when is_binary(TctiContextBin) ->
+tss2_sys_initialize(_TctiContextBin) ->
   erlang:nif_error(?LINE).
 
 tss2_sys_nv_read(_Size, _Index, _TctiContextBin)->

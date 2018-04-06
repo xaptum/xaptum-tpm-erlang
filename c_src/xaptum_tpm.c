@@ -223,6 +223,6 @@ static ErlNifFunc nif_funcs[] = {
     {"tss2_sys_nv_read", 3, tss2_sys_nv_read, ERL_NIF_DIRTY_JOB_CPU_BOUND}
     };
 
-ERL_NIF_INIT(xtt_erlang, nif_funcs, &load, NULL, NULL, NULL);
+ERL_NIF_INIT(xaptum_tpm, nif_funcs, &load, NULL, NULL, NULL);
 
 

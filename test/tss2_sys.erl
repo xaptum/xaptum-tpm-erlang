@@ -30,14 +30,18 @@
 
 
 nv_read_test() ->
+  application:ensure_all_started(lager),
+
+  xaptum_tpm:init(),
+
   {ok, TctiContextBin} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
   {ok, _SapiContextBin, TctiContextBin} = xaptum_tpm:tss2_sys_initialize(TctiContextBin),
 
   {ok, CredOutBufferBin, _TctiContextBin} = xaptum_tpm:tss2_sys_nv_read(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, TctiContextBin),
-  io:format("CRED nv read: ~p~n", [CredOutBufferBin]),
+  lager:info("CRED nv read: ~p", [CredOutBufferBin]),
 
   {ok, GpkOutBufferBin, _TctiContextBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, TctiContextBin),
-  io:format("GPK nv read: ~p~n", [GpkOutBufferBin]),
+  lager:info("GPK nv read: ~p", [GpkOutBufferBin]),
 
   false = true.
 
