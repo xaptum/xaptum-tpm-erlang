@@ -46,16 +46,18 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    ErlNifBinary hostname;
-    ErlNifBinary port;
+    char* hostname;
+    char* port;
 
-    if(!enif_inspect_binary(env, argv[0], &hostname) ) {
-        fprintf(stderr, "Bad hostname arg at position 0\n");
+    int ret = enif_get_string(env, argv[0], hostname, 1024, ERL_NIF_LATIN1)
+    if(ret <= || ret >= 1024) {
+        fprintf(stderr, "Bad hostname arg at position 0, ret %d \n", ret);
             return enif_make_badarg(env);
     }
 
-    if(!enif_inspect_binary(env, argv[1], &port) ) {
-        fprintf(stderr, "Bad port arg at position 1\n");
+    ret = enif_get_string(env, argv[1], port, 1024, ERL_NIF_LATIN1)
+    if(ret <= 0 || ret >= 1024) {
+        fprintf(stderr, "Bad port arg at position 1: ret %d\n", ret);
         return enif_make_badarg(env);
     }
 
@@ -66,11 +68,11 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_alloc_binary(128, &tcti_context_bin);
 
 
-    printf("Initializing socket on HOST '%s' %d PORT '%s' %d\n", hostname.data, hostname.size, port.data, port.size);
+    printf("Initializing socket on '%s:%s' \n", hostname, port);
 
     TSS2_RC rc =
-    tss2_tcti_init_socket(hostname.data,
-                          port.data,
+    tss2_tcti_init_socket(hostname,
+                          port,
                           (TSS2_TCTI_CONTEXT *) tcti_context_bin.data);
 
     if (rc == TSS2_RC_SUCCESS) {
