@@ -50,7 +50,7 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     char* port;
 
     int ret = enif_get_string(env, argv[0], hostname, 1024, ERL_NIF_LATIN1);
-    if(ret <= || ret >= 1024) {
+    if(ret <= 0 || ret >= 1024) {
         fprintf(stderr, "Bad hostname arg at position 0, ret %d \n", ret);
             return enif_make_badarg(env);
     }
