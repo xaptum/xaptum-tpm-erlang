@@ -9,6 +9,8 @@
 -module(tss2_sys).
 -author("iguberman").
 
+-export([nv_read_test/0]).
+
 -include_lib("eunit/include/eunit.hrl").
 
 -define(HOSTNAME, "localhost").
