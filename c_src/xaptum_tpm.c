@@ -59,11 +59,14 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
+
+    size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
+
     ErlNifBinary tcti_context_bin;
     enif_alloc_binary(128, &tcti_context_bin);
 
 
-    printf("Initializing socket on %s:%s", hostname.data, port.data);
+    printf("Initializing socket on HOST '%s' %d PORT '%s' %d\n", hostname.data, hostname.size, port.data, port.size);
 
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname.data,
