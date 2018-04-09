@@ -113,7 +113,7 @@ tss2_tcti_initialize_socket(Hostname, Port) ->
   end.
 
 tss2_sys_initialize(TctiContext) ->
-  case tss2_tcti_initialize_nif(TctiContext) of
+  case tss2_sys_initialize_nif(TctiContext) of
     {ok, SapiContext} ->
       {ok, SapiContext};
     {error, ErrorCode} ->
