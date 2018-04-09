@@ -12,6 +12,7 @@ ErlNifResourceType* STRUCT_RESOURCE_TYPE;
 void
 free_resource(ErlNifEnv* env, void* obj)
 {
+   printf("Releasing %p/n", obj);
    enif_free(obj);
 }
 
@@ -77,6 +78,8 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     if (rc == TSS2_RC_SUCCESS) {
         TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, 128);
 
+        printf("Created tcti_context %p/n", tcti_context);
+
         ERL_NIF_TERM tcti_resource = enif_make_resource_binary(env, tcti_context, &(tcti_context_bin.data), tcti_context_bin.size);
         enif_release_resource(tcti_context);
 
@@ -104,6 +107,8 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!enif_get_resource(env, argv[0], STRUCT_RESOURCE_TYPE, (void**) &tcti_context)) {
         return enif_make_badarg(env);
     }
+
+    printf("Initializing sapi with tcti_context %p/n", tcti_context);
 
     size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
@@ -154,6 +159,7 @@ tss2_tcti_ptr_release_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else{
+        printf("Released tcti_context %p/n", tcti_context);
         enif_release_resource(tcti_context);
         return ATOM_OK;
     }
@@ -185,6 +191,18 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
+
+    // START DEBUG INFO CODE
+    TSS2_TCTI_CONTEXT * tcti_context;
+    TSS2_RC rc = Tss2_Sys_GetTctiContext(sapi_context, &tcti_context);
+
+    if (TSS2_RC_SUCCESS != rc) {
+        fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
+    }
+    else{
+        printf("Sapi points to tcti_context %p/n", tcti_context);
+    }
+    // END DEBUG INFO CODE
 
     TPMS_AUTH_COMMAND session_data = {
         .sessionHandle = TPM_RS_PW,
