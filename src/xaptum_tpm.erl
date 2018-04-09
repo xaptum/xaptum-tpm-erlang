@@ -109,7 +109,7 @@ tss2_tcti_ptr_release_nif(_SapiContext)->
 tss2_tcti_initialize_socket(Hostname, Port) ->
   case tss2_tcti_initialize_socket_nif(Hostname, Port) of
     {ok, TctiContext} -> {ok, TctiContext};
-    {error, ErrorCode} -> lager:error("Error: ~s", [error_code(ErrorCode)]), {error, ErrorCode}
+    {error, ErrorCode} -> lager:error("~s", [error_code(ErrorCode)]), {error, ErrorCode}
   end.
 
 tss2_sys_initialize(TctiContext) ->
@@ -117,7 +117,7 @@ tss2_sys_initialize(TctiContext) ->
     {ok, SapiContext} ->
       {ok, SapiContext};
     {error, ErrorCode} ->
-      lager:error("Error: ~s", [error_code(ErrorCode)]),
+      lager:error(" ~s", [error_code(ErrorCode)]),
       {error, ErrorCode}
   end.
 
@@ -126,7 +126,7 @@ tss2_sys_nv_read(Size, Index, SapiContext)->
     {ok, OutBin} ->
       {ok, OutBin};
     {error, ErrorCode} ->
-      lager:error("Error: ~s", [error_code(ErrorCode)]),
+      lager:error("~s", [error_code(ErrorCode)]),
       {error, ErrorCode}
   end.
 
@@ -134,6 +134,6 @@ tss2_tcti_ptr_release(SapiContext)->
   case tss2_tcti_ptr_release_nif(SapiContext) of
     ok -> ok;
     {error, ErrorCode} ->
-      lager:error("Error: ~s", [error_code(ErrorCode)]),
+      lager:error("~s", [error_code(ErrorCode)]),
       {error, ErrorCode}
   end.
