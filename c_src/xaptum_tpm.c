@@ -46,10 +46,10 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    char* hostname;
-    char* port;
+    char hostname[256];
+    char port[8];
 
-    int ret = enif_get_string(env, argv[0], hostname, 256, ERL_NIF_LATIN1);
+    enif_get_string(env, argv[0], hostname, 256, ERL_NIF_LATIN1);
     if(ret <= 0 || ret >= 256) {
         fprintf(stderr, "Bad hostname arg at position 0, ret %d \n", ret);
             return enif_make_badarg(env);
@@ -60,7 +60,6 @@ tss2_tcti_initialize_socket(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         fprintf(stderr, "Bad port arg at position 1: ret %d\n", ret);
         return enif_make_badarg(env);
     }
-
 
     size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
