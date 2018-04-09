@@ -63,7 +63,6 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     }
 
     size_t tcti_ctx_size = tss2_tcti_getsize_socket();
-    tcti_ctx_size = 128; // TODO remove this line
 
     TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, tcti_ctx_size);
 
@@ -106,15 +105,13 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    printf("Initializing sapi with tcti_context %p\n", tcti_context);
-
     size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
     TSS2_SYS_CONTEXT *sapi_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, sapi_ctx_size);
 
     TSS2_ABI_VERSION abi_version = TSS2_ABI_CURRENT_VERSION;
 
-    printf("Initializing sapi with tcti_context %p and sapi context size %d\n", tcti_context, sapi_ctx_size);
+    printf("Initializing sapi context with tcti_context %p and sapi context size %d\n", tcti_context, sapi_ctx_size);
 
     TSS2_RC rc = Tss2_Sys_Initialize(
                               sapi_context,
@@ -193,6 +190,8 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 
     TSS2_RC rc = TSS2_RC_SUCCESS;
+
+    printf("NV READ of size %d at index %d\n", size, index);
 
     // START DEBUG INFO CODE
     TSS2_TCTI_CONTEXT * tcti_context;
