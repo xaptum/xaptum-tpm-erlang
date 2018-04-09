@@ -68,7 +68,7 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     enif_alloc_binary(128, &tcti_context_bin);
 
 
-    printf("Initializing socket on '%s:%s' \n", hostname, port);
+    printf("Initializing socket on '%s:%s'\n", hostname, port);
 
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname,
@@ -78,7 +78,7 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     if (rc == TSS2_RC_SUCCESS) {
         TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, 128);
 
-        printf("Created tcti_context %p/n", tcti_context);
+        printf("Created tcti_context %p\n", tcti_context);
 
         ERL_NIF_TERM tcti_resource = enif_make_resource_binary(env, tcti_context, &(tcti_context_bin.data), tcti_context_bin.size);
         enif_release_resource(tcti_context);
@@ -108,13 +108,15 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    printf("Initializing sapi with tcti_context %p/n", tcti_context);
+    printf("Initializing sapi with tcti_context %p\n", tcti_context);
 
     size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
     TSS2_SYS_CONTEXT *sapi_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, sapi_ctx_size);
 
     TSS2_ABI_VERSION abi_version = TSS2_ABI_CURRENT_VERSION;
+
+    printf("Initializing sapi with tcti_context %p and sapi context size %d\n", tcti_context, sapi_ctx_size);
 
     TSS2_RC rc = Tss2_Sys_Initialize(
                               sapi_context,
@@ -159,7 +161,7 @@ tss2_tcti_ptr_release_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else{
-        printf("Released tcti_context %p/n", tcti_context);
+        printf("Released tcti_context %p\n", tcti_context);
         enif_release_resource(tcti_context);
         return ATOM_OK;
     }
@@ -202,7 +204,7 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
     }
     else{
-        printf("Sapi points to tcti_context %p/n", tcti_context);
+        printf("Sapi points to tcti_context %p\n", tcti_context);
     }
     // END DEBUG INFO CODE
 
