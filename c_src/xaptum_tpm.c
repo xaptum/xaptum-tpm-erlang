@@ -64,9 +64,9 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
     size_t tcti_ctx_size = tss2_tcti_getsize_socket();
 
-    TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, sapi_ctx_size);
+    TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, tcti_ctx_size);
 
-    printf("Initializing tcti_context at %p with size %d on '%s:%s'\n", tcti_context, tcti_ctx_size, hostname, port);
+    printf("Initializing tcti_context at %p of size %d on '%s:%s'\n", tcti_context, tcti_ctx_size, hostname, port);
 
     TSS2_RC rc =
     tss2_tcti_init_socket(hostname,
