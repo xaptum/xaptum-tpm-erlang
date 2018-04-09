@@ -20,24 +20,26 @@
 -define(LIBNAME, 'xaptum-tpm-erlang').
 
 
--define(TCTI_LEVEL_ERROR, list_to_integer("A0000", 16)).
--define(SYS_PART2_LEVEL_ERROR, list_to_integer("90000", 16)).
--define(SYS_SAPI_LEVEL_ERROR, list_to_integer("80000", 16)).
+-define(TCTI_LEVEL_ERROR, 655360). %% list_to_integer("A0000", 16).
+-define(SYS_SAPI_LEVEL_ERROR, 524288). %% list_to_integer("80000", 16).
+-define(SYS_PART2_LEVEL_ERROR, 589824). %% list_to_integer("90000", 16).
+
 
 error_code(0)->"Success";
-error_code(RC) when RC bor ?TCTI_LEVEL_ERROR =:= RC ->
-  "TCTI: " ++ tcti_error_code(RC - ?TCTI_LEVEL_ERROR);
-error_code(RC) when RC bor ?SYS_SAPI_LEVEL_ERROR =:= RC ->
-  "Sys SAPI: " ++ sapi_error_code(RC - ?SYS_SAPI_LEVEL_ERROR);
-error_code(RC) when RC bor ?SYS_PART2_LEVEL_ERROR =:= RC ->
-  "Sys PART2: " ++ part2_error_code(RC - ?SYS_PART2_LEVEL_ERROR);
-error_code(?SYS_SAPI_LEVEL_ERROR)->"Sys SAPI level with no error code!";
-error_code(?SYS_PART2_LEVEL_ERROR)->"Sys PART2 level with no error code!";
-error_code(?TCTI_LEVEL_ERROR)->"TCTI level with no error code!";
+error_code(RC) ->
+  case RC bor ?TCTI_LEVEL_ERROR =:= RC of
+    true ->
+        "TCTI: " ++ tcti_error_code(RC - ?TCTI_LEVEL_ERROR);
+    _False ->
+        case RC bor ?SYS_SAPI_LEVEL_ERROR =:= RC of
+          true -> "Sys SAPI: " ++ sapi_error_code(RC - ?SYS_SAPI_LEVEL_ERROR);
+          _False -> case RC bor ?SYS_PART2_LEVEL_ERROR =:= RC of
+              true -> "Sys PART2: " ++ part2_error_code(RC - ?SYS_PART2_LEVEL_ERROR);
+              _False -> "Unknown TSS2 error level"
+                    end
+        end
+    end.
 
-error_code(_Unknown)->"UNKNOWN error!".
-
-common_error_code(1)->"General (or unclassified) error";
 common_error_code(4)->"ABI mismatch (Passed in ABI version doesn't match called module's ABI version)";
 common_error_code(5)->"Bad reference (a pointer is NULL that isn't allowed to be NULL)";
 common_error_code(6)->"Insufficient buffer";
