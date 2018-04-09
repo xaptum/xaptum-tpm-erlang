@@ -192,9 +192,11 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
 
+    TSS2_RC rc = TSS2_RC_SUCCESS;
+
     // START DEBUG INFO CODE
     TSS2_TCTI_CONTEXT * tcti_context;
-    TSS2_RC rc = Tss2_Sys_GetTctiContext(sapi_context, &tcti_context);
+    rc = Tss2_Sys_GetTctiContext(sapi_context, &tcti_context);
 
     if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
@@ -226,8 +228,6 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     ErlNifBinary out_buffer_bin;
     enif_alloc_binary(size, &out_buffer_bin);
-
-    TSS2_RC rc = TSS2_RC_SUCCESS;
 
     printf("Reading %d bytes from nvram\n", size);
 
