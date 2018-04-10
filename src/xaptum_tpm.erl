@@ -73,7 +73,15 @@ part2_error_code(_Unclassified)->"Unclassified!".
 init() ->
   SoName = filename:join([priv_dir(), ?LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
-  ok = erlang:load_nif(SoName, 0).
+  case erlang:load_nif(SoName, 0) of
+    ok ->
+      lager:info("Successfully loaded NIFs from ~p", [SoName]);
+    {error, {reload, ReloadMessage}} ->
+      lager:info("Reload attempt: ~p", [ReloadMessage]),
+      ok;
+    {error, RealError} -> lager:error("Error loading NIF library: ~p", [RealError])
+  end.
+
 
 priv_dir() ->
   case code:priv_dir(?APPNAME) of
@@ -122,7 +130,7 @@ tss2_sys_initialize(TctiContext) ->
       lager:info("SAPI context init successful!"),
       {ok, SapiContext};
     {error, ErrorCode} ->
-      lager:error(" ~s", [error_code(ErrorCode)]),
+      lager:error("~s", [error_code(ErrorCode)]),
       {error, ErrorCode}
   end.
 
