@@ -12,8 +12,14 @@ ErlNifResourceType* STRUCT_RESOURCE_TYPE;
 void
 free_resource(ErlNifEnv* env, void* obj)
 {
-   printf("Releasing %p/n", obj);
-   enif_free(obj);
+    printf("free_resource at %p\n", obj);
+
+    if(obj != NULL){
+        enif_free(obj);
+    }
+    else{
+        fprintf(stderr, "Attempting to free NULL pointer at %p\n", obj);
+    }
 }
 
 static int
@@ -124,6 +130,7 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else{
+        printf("SAPI context initialized successfully at %p\n", sapi_context);
         ERL_NIF_TERM sapi_resource = enif_make_resource(env, sapi_context);
         // the user explicitely has to call tss2_tcti_ptr_release to call enif_release_resource on tcti_context when done with sapi which keeps a pointer to it
         enif_keep_resource(tcti_context);
