@@ -129,7 +129,7 @@ tss2_sys_initialize(TctiContext) ->
 tss2_sys_nv_read(Size, Index, SapiContext)->
   case tss2_sys_nv_read_nif(Size, Index, SapiContext) of
     {ok, OutBin} ->
-      lager:info("nv read ~b bytes at ~b successful: ~p", [Size, Index, OutBin] ),
+      lager:info("nv read ~b bytes at ~s successful", [Size, integer_to_list(Index, 16)] ),
       {ok, OutBin};
     {error, ErrorCode} ->
       lager:error("~s", [error_code(ErrorCode)]),
