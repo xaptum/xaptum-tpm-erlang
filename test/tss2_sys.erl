@@ -44,9 +44,6 @@ nv_read_test() ->
   {ok, GpkOutBufferBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, SapiContext),
   lager:info("GPK nv read: ~p", [GpkOutBufferBin]),
 
-  {ok, GpkOutBufferBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, SapiContext),
-  lager:info("GPK nv read: ~p", [GpkOutBufferBin]),
-
   {ok, RootIdBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_ROOT_ID_SIZE, ?ROOT_ID_HANDLE, SapiContext),
   lager:info("Root ID nv read: ~p", [RootIdBin]),
 
