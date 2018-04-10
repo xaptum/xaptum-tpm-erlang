@@ -108,13 +108,18 @@ tss2_tcti_ptr_release_nif(_SapiContext)->
 
 tss2_tcti_initialize_socket(Hostname, Port) ->
   case tss2_tcti_initialize_socket_nif(Hostname, Port) of
-    {ok, TctiContext} -> {ok, TctiContext};
-    {error, ErrorCode} -> lager:error("~s", [error_code(ErrorCode)]), {error, ErrorCode}
+    {ok, TctiContext} ->
+      lager:info("TCTI init socket successful!"),
+      {ok, TctiContext};
+    {error, ErrorCode} ->
+      lager:error("~s", [error_code(ErrorCode)]),
+      {error, ErrorCode}
   end.
 
 tss2_sys_initialize(TctiContext) ->
   case tss2_sys_initialize_nif(TctiContext) of
     {ok, SapiContext} ->
+      lager:info("SAPI context init successful!"),
       {ok, SapiContext};
     {error, ErrorCode} ->
       lager:error(" ~s", [error_code(ErrorCode)]),
@@ -124,6 +129,7 @@ tss2_sys_initialize(TctiContext) ->
 tss2_sys_nv_read(Size, Index, SapiContext)->
   case tss2_sys_nv_read_nif(Size, Index, SapiContext) of
     {ok, OutBin} ->
+      lager:info("nv read ~b bytes at ~b successful: ~p", [Size, Index, OutBin] ),
       {ok, OutBin};
     {error, ErrorCode} ->
       lager:error("~s", [error_code(ErrorCode)]),
@@ -132,7 +138,9 @@ tss2_sys_nv_read(Size, Index, SapiContext)->
 
 tss2_tcti_ptr_release(SapiContext)->
   case tss2_tcti_ptr_release_nif(SapiContext) of
-    ok -> ok;
+    ok ->
+      lager:info("Tcti ptr resource released!"),
+      ok;
     {error, ErrorCode} ->
       lager:error("~s", [error_code(ErrorCode)]),
       {error, ErrorCode}
