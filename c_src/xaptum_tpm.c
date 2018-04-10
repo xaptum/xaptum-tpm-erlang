@@ -84,7 +84,7 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
         ERL_NIF_TERM tcti_resource = enif_make_resource(env, tcti_context);
 
-        enif_release_resource(tcti_context);
+        //enif_release_resource(tcti_context);  TODO seems to be the segfault culprit when later we call another release after keep_resource when asigning it to sapi
 
         return enif_make_tuple2(env, ATOM_OK, tcti_resource);
     }
