@@ -263,14 +263,12 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     if (rc == TSS2_RC_SUCCESS) {
-        printf("Read %d bytes: %s\n", out_buffer_bin.size, out_buffer_bin.data);
+        printf("Successfully read %d bytes\n", out_buffer_bin.size);
         return enif_make_tuple2(env, ATOM_OK, enif_make_binary(env, &out_buffer_bin));
     } else {
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
 }
-
-
 
 static ErlNifFunc nif_funcs[] = {
     {"tss2_tcti_initialize_socket_nif", 2, tss2_tcti_initialize_socket_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
