@@ -1,4 +1,4 @@
-PROJECT = xaptum-tpm-erlang
+PROJECT = xaptum_tpm_erlang
 REBAR = rebar3
 
 compile:
@@ -12,4 +12,4 @@ test: compile
 
 clean:
 	rm -rf _build
-	rm -rf priv/xaptum-tpm-erlang.so
+	rm -rf priv/xaptum_tpm_erlang.so
