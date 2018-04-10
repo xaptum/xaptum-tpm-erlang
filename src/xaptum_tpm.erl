@@ -17,7 +17,7 @@
 -export([priv_dir/0]).
 
 -define(APPNAME, xaptum_tpm_erlang).
--define(LIBNAME, 'xaptum-tpm-erlang').
+-define(LIBNAME, 'xaptum_tpm_erlang').
 
 
 -define(TCTI_LEVEL_ERROR, 655360). %% list_to_integer("A0000", 16).
