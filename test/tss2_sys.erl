@@ -24,11 +24,11 @@
 -define(XTT_DAA_ROOT_ID_SIZE, 16).
 -define(XTT_DAA_ROOT_PUB_KEY_SIZE, 32).
 
--define(KEY_HANDLE, list_to_integer("81800000", 16)).
--define(GPK_HANDLE, list_to_integer("1410000", 16)).
--define(CRED_HANDLE, list_to_integer("1410001", 16)).
--define(ROOT_ID_HANDLE, list_to_integer("1410003", 16)).
--define(ROOT_PUBKEY_HANDLE, list_to_integer("1410004", 16)).
+-define(KEY_HANDLE, 16#81800000).
+-define(GPK_HANDLE, 16#1410000).
+-define(CRED_HANDLE, 16#1410001).
+-define(ROOT_ID_HANDLE, 16#1410003).
+-define(ROOT_PUBKEY_HANDLE, 16#1410004).
 
 nv_read_test() ->
   application:ensure_all_started(lager),
@@ -49,8 +49,6 @@ nv_read_test() ->
 
   {ok, RootPubKeyBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_ROOT_PUB_KEY_SIZE, ?ROOT_PUBKEY_HANDLE, SapiContext),
   lager:info("Root pub key nv read: ~p", [RootPubKeyBin]),
-
-  ok = xaptum_tpm:tss2_tcti_ptr_release(SapiContext),
 
   false = true.
 

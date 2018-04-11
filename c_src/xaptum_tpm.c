@@ -7,19 +7,43 @@
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
 
-ErlNifResourceType* STRUCT_RESOURCE_TYPE;
+ErlNifResourceType* TCTI_RESOURCE_TYPE;
+ErlNifResourceType* SAPI_RESOURCE_TYPE;
+
+void
+release_sapi_pointer_to_tcti(ErlNifEnv* env, void* sapi_context)
+{
+    TSS2_TCTI_CONTEXT * tcti_context;
+    TSS2_RC rc = Tss2_Sys_GetTctiContext((TSS2_SYS_CONTEXT * ) sapi_context, &tcti_context);
+
+    if (TSS2_RC_SUCCESS != rc) {
+        fprintf(stderr, "Can't release tcti resource: error %d while getting TCTI Context pointer out of SAPI context\n", rc);
+    }
+    else{
+        enif_release_resource(tcti_context);
+        printf("Released tcti_context resource%p\n", tcti_context);
+    }
+}
+
 
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
     const char* mod = "xaptum_tpm";
-    const char* name = "struct";
 
-    STRUCT_RESOURCE_TYPE = enif_open_resource_type(
-        env, mod, name, NULL, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
-    );
 
-    if(STRUCT_RESOURCE_TYPE == NULL)
+    TCTI_RESOURCE_TYPE = enif_open_resource_type(
+              env, mod, "tcti", NULL, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
+          );
+
+    if(TCTI_RESOURCE_TYPE == NULL)
+        return -1;
+
+     SAPI_RESOURCE_TYPE = enif_open_resource_type(
+        env, mod, "sapi", release_sapi_pointer_to_tcti, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
+     );
+
+    if(SAPI_RESOURCE_TYPE == NULL)
         return -1;
 
     ATOM_OK = enif_make_atom(env, "ok");
@@ -40,24 +64,25 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
         return enif_make_badarg(env);
     }
 
+// TODO get hostname port max size from limits.h
     char hostname[256];
     char port[8];
 
-    int ret = enif_get_string(env, argv[0], hostname, 256, ERL_NIF_LATIN1);
-    if(ret <= 0 || ret >= 256) {
+    int ret = enif_get_string(env, argv[0], hostname, sizeof(hostname), ERL_NIF_LATIN1);
+    if(ret <= 0) {
         fprintf(stderr, "Bad hostname arg at position 0, ret %d \n", ret);
             return enif_make_badarg(env);
     }
 
-    ret = enif_get_string(env, argv[1], port, 8, ERL_NIF_LATIN1);
-    if(ret <= 0 || ret >= 8) {
+    ret = enif_get_string(env, argv[1], port, sizeof(port), ERL_NIF_LATIN1);
+    if(ret <= 0) {
         fprintf(stderr, "Bad port arg at position 1: ret %d\n", ret);
         return enif_make_badarg(env);
     }
 
     size_t tcti_ctx_size = tss2_tcti_getsize_socket();
 
-    TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, tcti_ctx_size);
+    TSS2_TCTI_CONTEXT * tcti_context = enif_alloc_resource(TCTI_RESOURCE_TYPE, tcti_ctx_size);
 
     printf("Initializing tcti_context at %p of size %d on '%s:%s'\n", tcti_context, tcti_ctx_size, hostname, port);
 
@@ -94,13 +119,13 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     TSS2_TCTI_CONTEXT * tcti_context;
 
-    if(!enif_get_resource(env, argv[0], STRUCT_RESOURCE_TYPE, (void**) &tcti_context)) {
+    if(!enif_get_resource(env, argv[0], TCTI_RESOURCE_TYPE, (void**) &tcti_context)) {
         return enif_make_badarg(env);
     }
 
     size_t sapi_ctx_size = Tss2_Sys_GetContextSize(0);
 
-    TSS2_SYS_CONTEXT *sapi_context = enif_alloc_resource(STRUCT_RESOURCE_TYPE, sapi_ctx_size);
+    TSS2_SYS_CONTEXT *sapi_context = enif_alloc_resource(SAPI_RESOURCE_TYPE, sapi_ctx_size);
 
     TSS2_ABI_VERSION abi_version = TSS2_ABI_CURRENT_VERSION;
 
@@ -114,6 +139,7 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error %d initializing TPM SAPI context\n", rc);
+        enif_release_resource(sapi_resource);
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else{
@@ -138,7 +164,7 @@ tss2_tcti_ptr_release_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     TSS2_SYS_CONTEXT * sapi_context;
 
-    if(!enif_get_resource(env, argv[0], STRUCT_RESOURCE_TYPE, (void**) &sapi_context)) {
+    if(!enif_get_resource(env, argv[0], SAPI_RESOURCE_TYPE, (void**) &sapi_context)) {
         return enif_make_badarg(env);
     }
 
@@ -177,7 +203,7 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     TSS2_SYS_CONTEXT * sapi_context;
-    if(!enif_get_resource(env, argv[2], STRUCT_RESOURCE_TYPE, (void**) &sapi_context)) {
+    if(!enif_get_resource(env, argv[2], TCTI_RESOURCE_TYPE, (void**) &sapi_context)) {
         fprintf(stderr, "Bad SAPI context arg at position 2\n");
         return enif_make_badarg(env);
     }
@@ -203,6 +229,9 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         .sessionHandle = TPM_RS_PW,
         .sessionAttributes = {0},
     };
+
+    // TODO move client test code into erlang
+
     TPMS_AUTH_RESPONSE sessionDataOut = {{0}, {0}, {0}};
     (void)sessionDataOut;
     TSS2_SYS_CMD_AUTHS sessionsData;
@@ -258,10 +287,10 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 }
 
 static ErlNifFunc nif_funcs[] = {
-    {"tss2_tcti_initialize_socket_nif", 2, tss2_tcti_initialize_socket_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_sys_initialize_nif", 1, tss2_sys_initialize_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_sys_nv_read_nif", 3, tss2_sys_nv_read_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"tss2_tcti_ptr_release_nif", 1, tss2_tcti_ptr_release_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND}
+    {"tss2_tcti_initialize_socket_nif", 2, tss2_tcti_initialize_socket_nif, ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"tss2_sys_initialize_nif", 1, tss2_sys_initialize_nif, 0},
+    {"tss2_sys_nv_read_nif", 3, tss2_sys_nv_read_nif, ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"tss2_tcti_ptr_release_nif", 1, tss2_tcti_ptr_release_nif}
 };
 
 ERL_NIF_INIT(xaptum_tpm, nif_funcs, &load, NULL, NULL, NULL);

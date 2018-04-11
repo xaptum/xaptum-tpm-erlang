@@ -20,9 +20,9 @@
 -define(LIBNAME, 'xaptum-tpm-erlang').
 
 
--define(TCTI_LEVEL_ERROR, 655360). %% list_to_integer("A0000", 16).
--define(SYS_SAPI_LEVEL_ERROR, 524288). %% list_to_integer("80000", 16).
--define(SYS_PART2_LEVEL_ERROR, 589824). %% list_to_integer("90000", 16).
+-define(TCTI_LEVEL_ERROR, 16#A0000).
+-define(SYS_SAPI_LEVEL_ERROR, 16#80000).
+-define(SYS_PART2_LEVEL_ERROR, 16#90000).
 
 
 error_code(0)->"Success";
@@ -39,6 +39,8 @@ error_code(RC) ->
                     end
         end
     end.
+
+%% PUT the error codes from TSS-spec as defines into a separate include file i.e. tss.hrl
 
 common_error_code(4)->"ABI mismatch (Passed in ABI version doesn't match called module's ABI version)";
 common_error_code(5)->"Bad reference (a pointer is NULL that isn't allowed to be NULL)";
@@ -114,6 +116,7 @@ tss2_tcti_ptr_release_nif(_SapiContext)->
 %% Optional API functions with human readable error log
 %%====================================================================
 
+%% PASS Port as int here becasue this API is for normal people
 tss2_tcti_initialize_socket(Hostname, Port) ->
   case tss2_tcti_initialize_socket_nif(Hostname, Port) of
     {ok, TctiContext} ->
