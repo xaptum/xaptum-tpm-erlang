@@ -14,7 +14,7 @@
 
 -export([priv_dir/0]).
 
--define(APPNAME, 'xaptum_tpm_erlang').
+-define(APPNAME, 'xaptum-tpm-erlang').
 -define(LIBNAME, 'xaptum-tpm-erlang').
 
 
