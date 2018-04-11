@@ -7,11 +7,9 @@
   tss2_tcti_initialize_socket_nif/2,
   tss2_sys_initialize_nif/1,
   tss2_sys_nv_read_nif/3,
-  tss2_tcti_ptr_release_nif/1,
   tss2_tcti_initialize_socket/2,
   tss2_sys_initialize/1,
-  tss2_sys_nv_read/3,
-  tss2_tcti_ptr_release/1
+  tss2_sys_nv_read/3
   ]).
 
 -export([priv_dir/0]).
