@@ -9,19 +9,6 @@ ERL_NIF_TERM ATOM_ERROR;
 
 ErlNifResourceType* STRUCT_RESOURCE_TYPE;
 
-void
-free_resource(ErlNifEnv* env, void* obj)
-{
-    printf("free_resource at %p\n", obj);
-
-    if(obj != NULL){
-        enif_free(obj);
-    }
-    else{
-        fprintf(stderr, "Attempting to free NULL pointer at %p\n", obj);
-    }
-}
-
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
@@ -29,7 +16,7 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     const char* name = "struct";
 
     STRUCT_RESOURCE_TYPE = enif_open_resource_type(
-        env, mod, name, free_resource, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
+        env, mod, name, NULL, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
     );
 
     if(STRUCT_RESOURCE_TYPE == NULL)
@@ -84,7 +71,7 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
         ERL_NIF_TERM tcti_resource = enif_make_resource(env, tcti_context);
 
-        //enif_release_resource(tcti_context);  TODO seems to be the segfault culprit when later we call another release after keep_resource when asigning it to sapi
+        enif_release_resource(tcti_context);
 
         return enif_make_tuple2(env, ATOM_OK, tcti_resource);
     }
