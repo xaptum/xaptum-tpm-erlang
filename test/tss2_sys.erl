@@ -50,7 +50,7 @@ nv_read_test() ->
   {ok, RootPubKeyBin} = xaptum_tpm:tss2_sys_nv_read( ?XTT_DAA_ROOT_PUB_KEY_SIZE, ?ROOT_PUBKEY_HANDLE, SapiContext),
   lager:info("Root pub key nv read: ~p", [RootPubKeyBin]),
 
-  false = true.
+  ok.
 
 
 
