@@ -139,7 +139,7 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     if (TSS2_RC_SUCCESS != rc) {
         fprintf(stderr, "Error %d initializing TPM SAPI context\n", rc);
-        enif_release_resource(sapi_resource);
+        enif_release_resource(sapi_context);
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else{
@@ -147,7 +147,7 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         ERL_NIF_TERM sapi_resource = enif_make_resource(env, sapi_context);
         // the user explicitely has to call tss2_tcti_ptr_release to call enif_release_resource on tcti_context when done with sapi which keeps a pointer to it
         enif_keep_resource(tcti_context);
-        enif_release_resource(sapi_resource);
+        enif_release_resource(sapi_context);
         return enif_make_tuple2(env, ATOM_OK, sapi_resource);
     }
 }
