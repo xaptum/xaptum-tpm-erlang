@@ -3,12 +3,15 @@
 #include <erl_nif.h>
 #include <tss2/tss2_sys.h>
 #include <tss2/tss2_tcti_socket.h>
+#include <limits.h>
 
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
 
 ErlNifResourceType* TCTI_RESOURCE_TYPE;
 ErlNifResourceType* SAPI_RESOURCE_TYPE;
+
+#define PORT_NAME_MAX 5;
 
 void
 release_sapi_pointer_to_tcti(ErlNifEnv* env, void* sapi_context)
@@ -64,9 +67,8 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
         return enif_make_badarg(env);
     }
 
-// TODO get hostname port max size from limits.h
-    char hostname[256];
-    char port[8];
+    char hostname[HOST_NAME_MAX];
+    char port[PORT_NAME_MAX];
 
     int ret = enif_get_string(env, argv[0], hostname, sizeof(hostname), ERL_NIF_LATIN1);
     if(ret <= 0) {
@@ -203,7 +205,7 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     TSS2_SYS_CONTEXT * sapi_context;
-    if(!enif_get_resource(env, argv[2], TCTI_RESOURCE_TYPE, (void**) &sapi_context)) {
+    if(!enif_get_resource(env, argv[2], SAPI_RESOURCE_TYPE, (void**) &sapi_context)) {
         fprintf(stderr, "Bad SAPI context arg at position 2\n");
         return enif_make_badarg(env);
     }
