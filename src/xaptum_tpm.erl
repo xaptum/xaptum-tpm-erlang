@@ -109,9 +109,6 @@ tss2_sys_initialize_nif(_TctiContext) ->
 tss2_sys_nv_read_nif(_Size, _Index, _SapiContext)->
   erlang:nif_error(?LINE).
 
-tss2_tcti_ptr_release_nif(_SapiContext)->
-  erlang:nif_error(?LINE).
-
 %%====================================================================
 %% Optional API functions with human readable error log
 %%====================================================================
@@ -142,16 +139,6 @@ tss2_sys_nv_read(Size, Index, SapiContext)->
     {ok, OutBin} ->
       lager:info("nv read ~b bytes at ~s successful", [Size, integer_to_list(Index, 16)] ),
       {ok, OutBin};
-    {error, ErrorCode} ->
-      lager:error("~s", [error_code(ErrorCode)]),
-      {error, ErrorCode}
-  end.
-
-tss2_tcti_ptr_release(SapiContext)->
-  case tss2_tcti_ptr_release_nif(SapiContext) of
-    ok ->
-      lager:info("Tcti ptr resource released!"),
-      ok;
     {error, ErrorCode} ->
       lager:error("~s", [error_code(ErrorCode)]),
       {error, ErrorCode}

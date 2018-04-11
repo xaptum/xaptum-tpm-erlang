@@ -15,7 +15,6 @@ Use plain NIFs in the following order (returns uninterpreted TSS2 error codes as
 
 {ok, NvReadBin} = tss2_sys_nv_read_nif(Size, Index, SapiContext).
 
-ok = tss2_tcti_ptr_release_nif(SapiContext).
 ```
 
 
@@ -28,6 +27,5 @@ Or use wrapped NIFs that will log info on success and error with human readable 
 
 {ok, NvReadBin} = tss2_sys_nv_read(Size, Index, SapiContext).
 
-ok = tss2_tcti_ptr_release(SapiContext).
 ```
 

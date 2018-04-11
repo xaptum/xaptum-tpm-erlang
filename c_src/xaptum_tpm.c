@@ -26,7 +26,7 @@ release_sapi_pointer_to_tcti(ErlNifEnv* env, void* sapi_context)
     }
     else{
         enif_release_resource(tcti_context);
-        printf("Released tcti_context resource%p\n", tcti_context);
+        printf("Released tcti_context resource %p\n", tcti_context);
     }
 }
 
@@ -157,37 +157,6 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 }
 
 static ERL_NIF_TERM
-tss2_tcti_ptr_release_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-
-    puts("Running NIF tss2_tcti_release\n");
-
-    if(argc != 1) {
-        return enif_make_badarg(env);
-    }
-
-    TSS2_SYS_CONTEXT * sapi_context;
-
-    if(!enif_get_resource(env, argv[0], SAPI_RESOURCE_TYPE, (void**) &sapi_context)) {
-        return enif_make_badarg(env);
-    }
-
-    TSS2_TCTI_CONTEXT * tcti_context;
-    TSS2_RC rc = Tss2_Sys_GetTctiContext(sapi_context, &tcti_context);
-
-    if (TSS2_RC_SUCCESS != rc) {
-        fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
-        return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
-    }
-    else{
-        printf("Released tcti_context %p\n", tcti_context);
-        enif_release_resource(tcti_context);
-        return ATOM_OK;
-    }
-}
-
-
-static ERL_NIF_TERM
 tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     puts("Running NIF tss2_sys_nv_read\n");
@@ -293,8 +262,7 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ErlNifFunc nif_funcs[] = {
     {"tss2_tcti_initialize_socket_nif", 2, tss2_tcti_initialize_socket_nif, ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"tss2_sys_initialize_nif", 1, tss2_sys_initialize_nif, 0},
-    {"tss2_sys_nv_read_nif", 3, tss2_sys_nv_read_nif, ERL_NIF_DIRTY_JOB_IO_BOUND},
-    {"tss2_tcti_ptr_release_nif", 1, tss2_tcti_ptr_release_nif}
+    {"tss2_sys_nv_read_nif", 3, tss2_sys_nv_read_nif, ERL_NIF_DIRTY_JOB_IO_BOUND}
 };
 
 ERL_NIF_INIT(xaptum_tpm, nif_funcs, &load, NULL, NULL, NULL);
