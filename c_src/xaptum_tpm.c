@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #define PORT_NAME_MAX 5
+#define HOST_NAME_MAX 256
 
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
