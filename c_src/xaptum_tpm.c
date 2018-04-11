@@ -5,13 +5,13 @@
 #include <tss2/tss2_tcti_socket.h>
 #include <limits.h>
 
+#define PORT_NAME_MAX 5
+
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
 
 ErlNifResourceType* TCTI_RESOURCE_TYPE;
 ErlNifResourceType* SAPI_RESOURCE_TYPE;
-
-#define PORT_NAME_MAX 5;
 
 void
 release_sapi_pointer_to_tcti(ErlNifEnv* env, void* sapi_context)
