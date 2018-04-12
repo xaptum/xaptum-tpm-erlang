@@ -5,7 +5,7 @@ BASEDIR := $(abspath $(CURDIR)/..)
 
 #PROJECT ?= $(notdir $(BASEDIR))
 #PROJECT := $(strip $(PROJECT))
-PROJECT := "xaptum_tpm_erlang"
+PROJECT := "libxaptum_tpm_erlang"
 
 ERTS_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s/erts-~s/include/\", [code:root_dir(), erlang:system_info(version)]).")
 ERL_INTERFACE_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, include)]).")
