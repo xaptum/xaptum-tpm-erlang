@@ -11,4 +11,4 @@ test: compile
 
 clean:
 	rm -rf _build
-	rm -rf priv/xaptum-tpm-erlang.so
+	rm -rf priv/xaptum_tpm_erlang.so
