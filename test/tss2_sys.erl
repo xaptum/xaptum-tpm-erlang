@@ -33,8 +33,6 @@
 nv_read_test() ->
   application:ensure_all_started(lager),
 
-  xaptum_tpm:init(),
-
   {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
   {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
 
