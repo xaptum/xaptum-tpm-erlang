@@ -14,8 +14,8 @@
 
 -export([priv_dir/0]).
 
--define(APPNAME, 'xaptum_tpm_erlang').
--define(LIBNAME, 'libxaptum_tpm_erlang').
+-define(TPM_APPNAME, 'xaptum_tpm_erlang').
+-define(TPM_LIBNAME, 'libxaptum_tpm_erlang').
 
 
 -define(TCTI_LEVEL_ERROR, 16#A0000).
@@ -71,7 +71,7 @@ sapi_error_code(MaybeCommonErrCode)-> common_error_code(MaybeCommonErrCode).
 part2_error_code(_Unclassified)->"Unclassified!".
 
 init() ->
-  SoName = filename:join([priv_dir(), ?LIBNAME]),
+  SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
   case erlang:load_nif(SoName, 0) of
     ok ->
@@ -84,7 +84,7 @@ init() ->
 
 
 priv_dir() ->
-  case code:priv_dir(?APPNAME) of
+  case code:priv_dir(?TPM_APPNAME) of
     {error, bad_name} ->
       case filelib:is_dir(filename:join(["..", priv])) of
         true ->
