@@ -17,6 +17,7 @@
 -define(TPM_APPNAME, 'xaptum_tpm_erlang').
 -define(TPM_LIBNAME, 'libxaptum_tpm_erlang').
 
+-on_load(init/0).
 
 -define(TCTI_LEVEL_ERROR, 16#A0000).
 -define(SYS_SAPI_LEVEL_ERROR, 16#80000).
