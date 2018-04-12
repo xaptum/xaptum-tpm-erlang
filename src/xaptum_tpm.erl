@@ -72,6 +72,8 @@ sapi_error_code(MaybeCommonErrCode)-> common_error_code(MaybeCommonErrCode).
 part2_error_code(_Unclassified)->"Unclassified!".
 
 init() ->
+  application:ensure_all_started(lager),
+
   SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
   case erlang:load_nif(SoName, 0) of

@@ -31,7 +31,6 @@
 -define(ROOT_PUBKEY_HANDLE, 16#1410004).
 
 nv_read_test() ->
-  application:ensure_all_started(lager),
 
   {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
   {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
