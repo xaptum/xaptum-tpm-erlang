@@ -36,7 +36,6 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
     const char* mod = "xaptum_tpm";
 
-
     TCTI_RESOURCE_TYPE = enif_open_resource_type(
               env, mod, "tcti", NULL, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
           );
@@ -62,9 +61,6 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 static ERL_NIF_TERM
 tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-
-    puts("Running NIF tss2_tcti_initialize_socket\n");
-
     if(argc != 2) {
         return enif_make_badarg(env);
     }
@@ -114,9 +110,6 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 static ERL_NIF_TERM
 tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-
-    puts("Running NIF tss2_sys_initialize\n");
-
     if(argc != 1) {
         return enif_make_badarg(env);
     }
@@ -133,8 +126,6 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     TSS2_ABI_VERSION abi_version = TSS2_ABI_CURRENT_VERSION;
 
-    printf("Initializing sapi context with tcti_context %p and sapi context size %d\n", tcti_context, sapi_ctx_size);
-
     TSS2_RC rc = Tss2_Sys_Initialize(
                               sapi_context,
                               sapi_ctx_size,
@@ -147,7 +138,6 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
     }
     else{
-        printf("SAPI context initialized successfully at %p\n", sapi_context);
         ERL_NIF_TERM sapi_resource = enif_make_resource(env, sapi_context);
         // the user explicitely has to call tss2_tcti_ptr_release to call enif_release_resource on tcti_context when done with sapi which keeps a pointer to it
         enif_keep_resource(tcti_context);
@@ -159,8 +149,6 @@ tss2_sys_initialize_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    puts("Running NIF tss2_sys_nv_read\n");
-
     if(argc != 3) {
         return enif_make_badarg(env);
     }
@@ -181,22 +169,7 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-
     TSS2_RC rc = TSS2_RC_SUCCESS;
-
-    printf("NV READ of size %d at index %d\n", size, index);
-
-    // START DEBUG INFO CODE
-    TSS2_TCTI_CONTEXT * tcti_context;
-    rc = Tss2_Sys_GetTctiContext(sapi_context, &tcti_context);
-
-    if (TSS2_RC_SUCCESS != rc) {
-        fprintf(stderr, "Error %d getting TCTI Context pointer out of SAPI context\n", rc);
-    }
-    else{
-        printf("Sapi points to tcti_context %p\n", tcti_context);
-    }
-    // END DEBUG INFO CODE
 
     TPMS_AUTH_COMMAND session_data = {
         .sessionHandle = TPM_RS_PW,
@@ -204,6 +177,8 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     };
 
     // TODO move client test code into erlang
+
+    printf("Reading %d bytes from nvram at %x\n", size, index);
 
     TPMS_AUTH_RESPONSE sessionDataOut = {{0}, {0}, {0}};
     (void)sessionDataOut;
@@ -223,8 +198,6 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     ErlNifBinary out_buffer_bin;
     enif_alloc_binary(size, &out_buffer_bin);
-
-    printf("Reading %d bytes from nvram\n", size);
 
     while (size > 0) {
         uint16_t bytes_to_read = size;
@@ -252,7 +225,6 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     if (rc == TSS2_RC_SUCCESS) {
-        printf("Successfully read %d bytes\n", out_buffer_bin.size);
         return enif_make_tuple2(env, ATOM_OK, enif_make_binary(env, &out_buffer_bin));
     } else {
         return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc));
