@@ -33,7 +33,7 @@ finalize_sapi(ErlNifEnv* env, void* sapi_context)
 }
 
 void finalize_tcti(ErlNifEnv* env, void* tcti_context){
-    %% This closes tcti socket
+    // This closes tcti socket
     tss2_tcti_finalize(tcti_context);
 }
 
