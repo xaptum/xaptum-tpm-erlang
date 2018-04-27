@@ -65,6 +65,24 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     return 0;
 }
 
+static ERL_NIF_TERM tss2_tcti_finalize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    if(argc != 1) {
+        return enif_make_badarg(env);
+    }
+
+    TSS2_TCTI_CONTEXT * tcti_context;
+
+    if(!enif_get_resource(env, argv[0], TCTI_RESOURCE_TYPE, (void**) &tcti_context)) {
+        return enif_make_badarg(env);
+    }
+
+    tss2_tcti_finalize(tcti_context);
+
+    return ATOM_OK;
+}
+
+
 static ERL_NIF_TERM
 tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -247,7 +265,8 @@ tss2_sys_nv_read_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ErlNifFunc nif_funcs[] = {
     {"tss2_tcti_initialize_socket_nif", 2, tss2_tcti_initialize_socket_nif, ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"tss2_sys_initialize_nif", 1, tss2_sys_initialize_nif, 0},
-    {"tss2_sys_nv_read_nif", 3, tss2_sys_nv_read_nif, ERL_NIF_DIRTY_JOB_IO_BOUND}
+    {"tss2_sys_nv_read_nif", 3, tss2_sys_nv_read_nif, ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"tss2_tcti_finalize_socket_nif", 1, tss2_tcti_finalize_socket_nif, 0}
 };
 
 ERL_NIF_INIT(xaptum_tpm, nif_funcs, &load, NULL, NULL, NULL);

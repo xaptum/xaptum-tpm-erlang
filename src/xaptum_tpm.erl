@@ -7,6 +7,7 @@
   tss2_tcti_initialize_socket_nif/2,
   tss2_sys_initialize_nif/1,
   tss2_sys_nv_read_nif/3,
+  tss2_tcti_finalize_socket_nif/1,
   tss2_tcti_initialize_socket/2,
   tss2_sys_initialize/1,
   tss2_sys_nv_read/3
@@ -108,6 +109,9 @@ tss2_sys_initialize_nif(_TctiContext) ->
   erlang:nif_error(?LINE).
 
 tss2_sys_nv_read_nif(_Size, _Index, _SapiContext)->
+  erlang:nif_error(?LINE).
+
+tss2_tcti_finalize_socket_nif(_TctiContext)->
   erlang:nif_error(?LINE).
 
 %%====================================================================
