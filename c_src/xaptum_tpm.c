@@ -91,19 +91,24 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
                           port,
                           tcti_context);
 
+    ERL_NIF_TERM ret;
+
     if (rc == TSS2_RC_SUCCESS) {
         printf("Initialized tcti_context at %p\n", tcti_context);
 
         ERL_NIF_TERM tcti_resource = enif_make_resource(env, tcti_context);
 
-        enif_release_resource(tcti_context);
-
-        return enif_make_tuple2(env, ATOM_OK, tcti_resource);
+        ret = enif_make_tuple2(env, ATOM_OK, tcti_resource);
     }
     else{
         fprintf(stderr, "Unable to initialize tcti socket due to error %d!\n", rc);
-        return enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc)); // TODO return rc description instead of int
+
+        ret = enif_make_tuple2(env, ATOM_ERROR, enif_make_int(env, rc)); // TODO return rc description instead of int
     }
+
+    enif_release_resource(tcti_context);
+
+    return ret;
 }
 
 
