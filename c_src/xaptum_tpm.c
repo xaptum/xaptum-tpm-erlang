@@ -68,15 +68,15 @@ tss2_tcti_initialize_socket_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     char hostname[HOST_NAME_MAX];
     char port[PORT_NAME_MAX];
 
-    int ret = enif_get_string(env, argv[0], hostname, sizeof(hostname), ERL_NIF_LATIN1);
-    if(ret <= 0) {
-        fprintf(stderr, "Bad hostname arg at position 0, ret %d \n", ret);
+    int str = enif_get_string(env, argv[0], hostname, sizeof(hostname), ERL_NIF_LATIN1);
+    if(str <= 0) {
+        fprintf(stderr, "Bad hostname arg at position 0, str %d \n", str);
             return enif_make_badarg(env);
     }
 
-    ret = enif_get_string(env, argv[1], port, sizeof(port), ERL_NIF_LATIN1);
-    if(ret <= 0) {
-        fprintf(stderr, "Bad port arg at position 1: ret %d\n", ret);
+    str = enif_get_string(env, argv[1], port, sizeof(port), ERL_NIF_LATIN1);
+    if(str <= 0) {
+        fprintf(stderr, "Bad port arg at position 1: str %d\n", str);
         return enif_make_badarg(env);
     }
 
