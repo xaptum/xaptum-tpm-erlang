@@ -52,7 +52,7 @@ nv_read_test() ->
 nv_read_multi_process_test()->
   lager:info("STARTING MULTI PROCESS TEST..."),
 
-  {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(?HOSTNAME, ?PORT),
+  {ok, SapiContext} = xaptum_tpm:tss2_sys_maybe_initialize(?HOSTNAME, ?PORT),
 
   {ok, CredOutBufferBin} = nv_read_from_child_proc(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, SapiContext),
   lager:info("CHILD PROC CRED nv read: ~p", [CredOutBufferBin]),
