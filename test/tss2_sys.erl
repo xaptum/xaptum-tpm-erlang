@@ -32,6 +32,8 @@
 
 nv_read_test() ->
 
+  lager:info("STARTING SINGLE PROCESS TEST..."),
+
   {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
   {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
 
@@ -49,6 +51,46 @@ nv_read_test() ->
 
   ok.
 
+nv_read_multi_process_test()->
+  timer:sleep(5000),
+
+  lager:info("STARTING MULTI PROCESS TEST..."),
+
+  {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
+  {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
+
+  {ok, CredOutBufferBin} = nv_read_from_child_proc(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, SapiContext),
+  lager:info("CHILD PROC CRED nv read: ~p", [CredOutBufferBin]),
+
+  {ok, GpkOutBufferBin} = nv_read_from_child_proc( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, SapiContext),
+  lager:info("CHILD PROC GPK nv read: ~p", [GpkOutBufferBin]),
+
+  {ok, RootIdBin} = nv_read_from_child_proc( ?XTT_DAA_ROOT_ID_SIZE, ?ROOT_ID_HANDLE, SapiContext),
+  lager:info("CHILD PROC Root ID nv read: ~p", [RootIdBin]),
+
+  {ok, RootPubKeyBin} = nv_read_from_child_proc( ?XTT_DAA_ROOT_PUB_KEY_SIZE, ?ROOT_PUBKEY_HANDLE, SapiContext),
+  lager:info("CHILD PROC Root pub key nv read: ~p", [RootPubKeyBin]),
+
+  ok.
+
+nv_read_from_child_proc(Size, Handle, SapiContext)->
+  Parent = self(),
+  NvReadFun =
+    fun() ->
+      Response = xaptum_tpm:tss2_sys_nv_read( Size, Handle, SapiContext),
+      Parent ! {nvread, Response}
+    end,
+  Pid = spawn(NvReadFun),
+  lager:info("Running nv read from proc ~p", [Pid]),
+  receive
+    {nvread, Result}  ->
+      lager:info("Received nvread result from ~p: ~p~n", [Pid, Result]),
+      Result
+  after
+    5000 ->
+      lager:error("Nvread timeout from ~p", [Pid]),
+      {error, timeout_after_5000}
+  end.
 
 
 
