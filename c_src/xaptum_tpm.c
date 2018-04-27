@@ -16,7 +16,7 @@ ErlNifResourceType* TCTI_RESOURCE_TYPE;
 ErlNifResourceType* SAPI_RESOURCE_TYPE;
 
 void
-release_sapi_pointer_to_tcti(ErlNifEnv* env, void* sapi_context)
+finalize_sapi(ErlNifEnv* env, void* sapi_context)
 {
     TSS2_TCTI_CONTEXT * tcti_context;
     TSS2_RC rc = Tss2_Sys_GetTctiContext((TSS2_SYS_CONTEXT * ) sapi_context, &tcti_context);
@@ -28,8 +28,14 @@ release_sapi_pointer_to_tcti(ErlNifEnv* env, void* sapi_context)
         enif_release_resource(tcti_context);
         printf("Released tcti_context resource %p\n", tcti_context);
     }
+
+    Tss2_Sys_Finalize(sapi_context);
 }
 
+void finalize_tcti(ErlNifEnv* env, void* tcti_context){
+    %% This closes tcti socket
+    tss2_tcti_finalize(tcti_context);
+}
 
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
@@ -37,14 +43,14 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     const char* mod = "xaptum_tpm";
 
     TCTI_RESOURCE_TYPE = enif_open_resource_type(
-              env, mod, "tcti", NULL, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
+              env, mod, "tcti", finalize_tcti, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
           );
 
     if(TCTI_RESOURCE_TYPE == NULL)
         return -1;
 
      SAPI_RESOURCE_TYPE = enif_open_resource_type(
-        env, mod, "sapi", release_sapi_pointer_to_tcti, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
+        env, mod, "sapi", finalize_sapi, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL
      );
 
     if(SAPI_RESOURCE_TYPE == NULL)
