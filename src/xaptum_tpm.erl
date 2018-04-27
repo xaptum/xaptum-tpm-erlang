@@ -17,6 +17,9 @@
 -define(TPM_APPNAME, 'xaptum_tpm_erlang').
 -define(TPM_LIBNAME, 'libxaptum_tpm_erlang').
 
+-define(TPM_TABLE_HOLDER, tpm_holder).
+-define(TPM_TABLE, tpm).
+
 -on_load(init/0).
 
 -define(TCTI_LEVEL_ERROR, 16#A0000).
@@ -73,7 +76,11 @@ part2_error_code(_Unclassified)->"Unclassified!".
 
 init() ->
   application:ensure_all_started(lager),
-  tpm = ets:new(tpm, [named_table, set, public, {read_concurrency, true}]),
+
+  tpm = ets:new(?TPM_TABLE, [named_table, set, public, {read_concurrency, true}]),
+  lager:info("Initialized tpm table in process ~p", [self()]),
+  register(?TPM_TABLE_HOLDER, self(),
+
   SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
   case erlang:load_nif(SoName, 0) of
@@ -117,21 +124,28 @@ tss2_sys_nv_read_nif(_Size, _Index, _SapiContext)->
 %% PASS Port as int here becasue this API is for normal people
 %% Enforce no more than one TCTI socket per host
 tss2_tcti_initialize_socket(Hostname, Port) ->
-  case ets:lookup(tpm, {Hostname, Port, tcti}) of
-    [{{Hostname, Port, tcti}, TctiContext}] ->
-      lager:info("Found existing tcti context ~p on ~p:~p", [TctiContext, Hostname, Port]),
-      {ok, TctiContext};
-    [] ->
-      case tss2_tcti_initialize_socket_nif(Hostname, Port) of
-        {ok, TctiContext} ->
-          lager:info("TCTI init socket successful!"),
-          ets:insert(tpm, {{Hostname, Port, tcti}, TctiContext}),
+  case whereis(?TPM_TABLE_HOLDER) of
+    undefined ->
+      lager:error("tpm_holder must have died!"),
+      {error, tpm_holder_dead};
+    Pid when is_pid(Pid) ->
+      case ets:lookup(tpm, {Hostname, Port, tcti}) of
+        [{{Hostname, Port, tcti}, TctiContext}] ->
+          lager:info("Found existing tcti context ~p on ~p:~p", [TctiContext, Hostname, Port]),
           {ok, TctiContext};
-        {error, ErrorCode} ->
-          lager:error("~s", [error_code(ErrorCode)]),
-        {error, ErrorCode}
+        [] ->
+          case tss2_tcti_initialize_socket_nif(Hostname, Port) of
+            {ok, TctiContext} ->
+              lager:info("TCTI init socket successful!"),
+              ets:insert(tpm, {{Hostname, Port, tcti}, TctiContext}),
+              {ok, TctiContext};
+            {error, ErrorCode} ->
+              lager:error("~s", [error_code(ErrorCode)]),
+              {error, ErrorCode}
+          end
       end
   end.
+
 
 %% Enforce no more than one Sapi context per TctiContext it's pointing to
 tss2_sys_initialize(TctiContext) ->

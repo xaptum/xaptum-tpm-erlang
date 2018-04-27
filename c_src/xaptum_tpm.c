@@ -30,6 +30,7 @@ finalize_sapi(ErlNifEnv* env, void* sapi_context)
     }
 
     Tss2_Sys_Finalize(sapi_context);
+    printf("Finalized sapi_context %p\n", sapi_context);
 }
 
 void finalize_tcti(ErlNifEnv* env, void* tcti_context){
