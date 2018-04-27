@@ -34,8 +34,7 @@
 nv_read_test() ->
   lager:info("STARTING SINGLE PROCESS TEST..."),
 
-  {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
-  {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
+  {ok, SapiContext} = xaptum_tpm:tss2_sys_maybe_initialize(?HOSTNAME, ?PORT),
 
   {ok, CredOutBufferBin} = xaptum_tpm:tss2_sys_nv_read(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, SapiContext),
   lager:info("CRED nv read: ~p", [CredOutBufferBin]),
@@ -53,11 +52,13 @@ nv_read_test() ->
 nv_read_multi_process_test()->
   lager:info("STARTING MULTI PROCESS TEST..."),
 
-  {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
-  {ok, SapiContext} = xaptum_tpm:tss2_sys_initialize(TctiContext),
+  {ok, SapiContext} = xaptum_tpm:tss2_sys_maybe_initialize(?HOSTNAME, ?PORT),
 
   {ok, CredOutBufferBin} = nv_read_from_child_proc(?XTT_DAA_CRED_SIZE, ?CRED_HANDLE, SapiContext),
   lager:info("CHILD PROC CRED nv read: ~p", [CredOutBufferBin]),
+
+  %% Sanity check, this is a mere retrieval from foil, shouln't hurt anything if that's what it is
+  {ok, _TctiSocket} = xaptum_tpm:tss2_tcti_maybe_initialize_socket(?HOSTNAME, ?PORT),
 
   {ok, GpkOutBufferBin} = nv_read_from_child_proc( ?XTT_DAA_GROUP_PUB_KEY_SIZE, ?GPK_HANDLE, SapiContext),
   lager:info("CHILD PROC GPK nv read: ~p", [GpkOutBufferBin]),
