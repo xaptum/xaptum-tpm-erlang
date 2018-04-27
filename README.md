@@ -18,9 +18,9 @@ Use plain NIFs in the following order (returns uninterpreted TSS2 error codes as
 ```
 
 
-Or use wrapped NIFs (recommended) because:
+Optionally use higher level Xaptum-TPM API: 
 
-1. Tey log info on success and error with human readable TSS2 error codes.
+1. Wrapped NIFs log info on success and error with human readable TSS2 error codes.
 2. They enforce only a single Tcti socket per TPM host preventing blocked processes. 
 3. Explicit call to create Tcti socket not required to create Sapi context. 
 
