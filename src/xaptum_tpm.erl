@@ -7,7 +7,6 @@
   tss2_tcti_initialize_socket_nif/2,
   tss2_sys_initialize_nif/1,
   tss2_sys_nv_read_nif/3,
-  tss2_tcti_finalize_socket_nif/1,
   tss2_tcti_initialize_socket/2,
   tss2_sys_initialize/1,
   tss2_sys_nv_read/3
@@ -74,7 +73,7 @@ part2_error_code(_Unclassified)->"Unclassified!".
 
 init() ->
   application:ensure_all_started(lager),
-
+  ets:new(tpm),
   SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
   case erlang:load_nif(SoName, 0) of
@@ -111,32 +110,45 @@ tss2_sys_initialize_nif(_TctiContext) ->
 tss2_sys_nv_read_nif(_Size, _Index, _SapiContext)->
   erlang:nif_error(?LINE).
 
-tss2_tcti_finalize_socket_nif(_TctiContext)->
-  erlang:nif_error(?LINE).
-
 %%====================================================================
 %% Optional API functions with human readable error log
 %%====================================================================
 
 %% PASS Port as int here becasue this API is for normal people
+%% Enforce no more than one TCTI socket per host
 tss2_tcti_initialize_socket(Hostname, Port) ->
-  case tss2_tcti_initialize_socket_nif(Hostname, Port) of
-    {ok, TctiContext} ->
-      lager:info("TCTI init socket successful!"),
+  case ets:lookup(tpm, {Hostname, Port, tcti}) of
+    [{{Hostname, Port, tcti}, TctiContext}] ->
+      lager:info("Found existing tcti context ~p on ~p:~p", [TctiContext, Hostname, Port]),
       {ok, TctiContext};
-    {error, ErrorCode} ->
-      lager:error("~s", [error_code(ErrorCode)]),
-      {error, ErrorCode}
+    [] ->
+      case tss2_tcti_initialize_socket_nif(Hostname, Port) of
+        {ok, TctiContext} ->
+          lager:info("TCTI init socket successful!"),
+          ets:insert(tpm, {{Hostname, Port, tcti}, TctiContext}),
+          {ok, TctiContext};
+        {error, ErrorCode} ->
+          lager:error("~s", [error_code(ErrorCode)]),
+        {error, ErrorCode}
+      end
   end.
 
+%% Enforce no more than one Sapi context per TctiContext it's pointing to
 tss2_sys_initialize(TctiContext) ->
-  case tss2_sys_initialize_nif(TctiContext) of
-    {ok, SapiContext} ->
-      lager:info("SAPI context init successful!"),
+  case ets:lookup(tpm, {TctiContext, sapi}) of
+    [{{TctiContext, sapi}, SapiContext}] ->
+      lager:info("Found existing sapi context ~p with tcti socket ~p", [SapiContext, TctiContext]),
       {ok, SapiContext};
-    {error, ErrorCode} ->
-      lager:error("~s", [error_code(ErrorCode)]),
-      {error, ErrorCode}
+    [] ->
+      case tss2_sys_initialize_nif(TctiContext) of
+        {ok, SapiContext} ->
+          lager:info("SAPI context init successful!"),
+          ets:insert(tpm, {{TctiContext, sapi}, SapiContext}),
+          {ok, SapiContext};
+        {error, ErrorCode} ->
+          lager:error("~s", [error_code(ErrorCode)]),
+          {error, ErrorCode}
+      end
   end.
 
 tss2_sys_nv_read(Size, Index, SapiContext)->
