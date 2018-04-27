@@ -18,12 +18,18 @@ Use plain NIFs in the following order (returns uninterpreted TSS2 error codes as
 ```
 
 
-Or use wrapped NIFs that will log info on success and error with human readable TSS2 error codes:
+Or use wrapped NIFs (recommended) because:
+
+1. Tey log info on success and error with human readable TSS2 error codes.
+2. They enforce only a single Tcti socket per TPM host preventing blocked processes. 
+3. Explicit call to create Tcti socket not required to create Sapi context. 
 
 ```
-{ok, TctiContext} = tss2_tcti_initialize_socket(Hostname, Port).
+%% Use only when TctiContext is needed by itself:
+{ok, TctiContext} = tss2_tcti_maybe_initialize_socket(Hostname, Port).
 
-{ok, SapiContext} = tss2_sys_initialize(TctiContext).
+%% Takes care of creating TctiContext too if it doesn't yet exist.
+{ok, SapiContext} = tss2_sys_maybe_initialize(Hostname, Port).
 
 {ok, NvReadBin} = tss2_sys_nv_read(Size, Index, SapiContext).
 
