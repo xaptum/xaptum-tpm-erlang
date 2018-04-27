@@ -79,7 +79,7 @@ static ERL_NIF_TERM tss2_tcti_finalize_socket_nif(ErlNifEnv* env, int argc, cons
 
     tss2_tcti_finalize(tcti_context);
 
-    puts("TCTI socket finalized explicitely from tss2_tcti_finalize_socket_nif\n");
+    printf("TCTI socket at %p finalized explicitely from tss2_tcti_finalize_socket_nif\n", tcti_context);
 
     return ATOM_OK;
 }

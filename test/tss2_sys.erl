@@ -53,6 +53,8 @@ nv_read_test() ->
 
 
 nv_read_multi_process_test()->
+  timer:sleep(1000),
+
   lager:info("STARTING MULTI PROCESS TEST..."),
 
   {ok, TctiContext} = xaptum_tpm:tss2_tcti_initialize_socket(?HOSTNAME, ?PORT),
