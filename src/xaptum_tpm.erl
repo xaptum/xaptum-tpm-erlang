@@ -7,8 +7,8 @@
   tss2_tcti_initialize_socket_nif/2,
   tss2_sys_initialize_nif/1,
   tss2_sys_nv_read_nif/3,
-  tss2_tcti_initialize_socket/2,
-  tss2_sys_initialize/1,
+  tss2_tcti_maybe_initialize_socket/2,
+  tss2_sys_maybe_initialize/2,
   tss2_sys_nv_read/3
   ]).
 
@@ -76,11 +76,9 @@ part2_error_code(_Unclassified)->"Unclassified!".
 
 init() ->
   application:ensure_all_started(lager),
-
-  tpm = ets:new(?TPM_TABLE, [named_table, set, public, {read_concurrency, true}]),
-  lager:info("Initialized tpm table in process ~p", [self()]),
-  register(?TPM_TABLE_HOLDER, self()),
-
+  foil_app:start(),
+  foil:new(tpm),
+  foil:load(tpm),
   SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
   case erlang:load_nif(SoName, 0) of
@@ -123,41 +121,38 @@ tss2_sys_nv_read_nif(_Size, _Index, _SapiContext)->
 
 %% PASS Port as int here becasue this API is for normal people
 %% Enforce no more than one TCTI socket per host
-tss2_tcti_initialize_socket(Hostname, Port) ->
-  case whereis(?TPM_TABLE_HOLDER) of
-    undefined ->
-      lager:error("tpm_holder must have died!"),
-      {error, tpm_holder_dead};
-    Pid when is_pid(Pid) ->
-      case ets:lookup(tpm, {Hostname, Port, tcti}) of
-        [{{Hostname, Port, tcti}, TctiContext}] ->
-          lager:info("Found existing tcti context ~p on ~p:~p", [TctiContext, Hostname, Port]),
+tss2_tcti_maybe_initialize_socket(Hostname, Port) ->
+  case tpm_foil:lookup({Hostname, Port, tcti}) of
+    {ok, TctiContext} ->
+      lager:info("Found existing tcti context ~p on ~p:~p", [TctiContext, Hostname, Port]),
+      {ok, TctiContext};
+    {error, key_not_found} ->
+      case tss2_tcti_initialize_socket_nif(Hostname, Port) of
+        {ok, TctiContext} ->
+          lager:info("TCTI init socket successful!"),
+          foil:insert(tpm, {Hostname, Port, tcti}, TctiContext),
+          foil:load(tpm),
           {ok, TctiContext};
-        [] ->
-          case tss2_tcti_initialize_socket_nif(Hostname, Port) of
-            {ok, TctiContext} ->
-              lager:info("TCTI init socket successful!"),
-              ets:insert(tpm, {{Hostname, Port, tcti}, TctiContext}),
-              {ok, TctiContext};
-            {error, ErrorCode} ->
-              lager:error("~s", [error_code(ErrorCode)]),
-              {error, ErrorCode}
-          end
+        {error, ErrorCode} ->
+          lager:error("~s", [error_code(ErrorCode)]),
+          {error, ErrorCode}
       end
   end.
 
-
-%% Enforce no more than one Sapi context per TctiContext it's pointing to
-tss2_sys_initialize(TctiContext) ->
-  case ets:lookup(tpm, {TctiContext, sapi}) of
-    [{{TctiContext, sapi}, SapiContext}] ->
-      lager:info("Found existing sapi context ~p with tcti socket ~p", [SapiContext, TctiContext]),
+%% Enforce no more than one Sapi context per TPM host
+%% (restriction inherited from tcti socket which sapi points to)
+tss2_sys_maybe_initialize(Hostname, Port) ->
+  case tpm_foil:lookup({Hostname, Port, sapi}) of
+    {ok, SapiContext} ->
+      lager:info("Found existing sapi context ~p on ~p:~p", [SapiContext, Hostname, Port]),
       {ok, SapiContext};
-    [] ->
+    {error, key_not_found} ->
+      {ok, TctiContext} = tss2_tcti_maybe_initialize_socket(Hostname, Port),
       case tss2_sys_initialize_nif(TctiContext) of
         {ok, SapiContext} ->
           lager:info("SAPI context init successful!"),
-          ets:insert(tpm, {{TctiContext, sapi}, SapiContext}),
+          foil:insert(tpm, {Hostname, Port, sapi}, SapiContext),
+          foil:load(tpm),
           {ok, SapiContext};
         {error, ErrorCode} ->
           lager:error("~s", [error_code(ErrorCode)]),
