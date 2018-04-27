@@ -79,7 +79,7 @@ init() ->
 
   tpm = ets:new(?TPM_TABLE, [named_table, set, public, {read_concurrency, true}]),
   lager:info("Initialized tpm table in process ~p", [self()]),
-  register(?TPM_TABLE_HOLDER, self(),
+  register(?TPM_TABLE_HOLDER, self()),
 
   SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
