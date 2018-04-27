@@ -73,12 +73,12 @@ part2_error_code(_Unclassified)->"Unclassified!".
 
 init() ->
   application:ensure_all_started(lager),
-  ets:new(tpm),
   SoName = filename:join([priv_dir(), ?TPM_LIBNAME]),
   lager:info("Loading NIFs from ~p", [SoName]),
   case erlang:load_nif(SoName, 0) of
     ok ->
-      lager:info("Successfully loaded NIFs from ~p", [SoName]);
+      lager:info("Successfully loaded NIFs from ~p", [SoName]),
+      tpm = ets:new(tpm, [named_table, set, public, {read_concurrency, true}]);
     {error, {reload, ReloadMessage}} ->
       lager:info("Reload attempt: ~p", [ReloadMessage]),
       ok;

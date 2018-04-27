@@ -9,9 +9,7 @@
 -module(tss2_sys).
 -author("iguberman").
 
--export([
-  nv_read_test/0,
-  nv_read_multi_process_test/0]).
+-export([]).
 
 -include_lib("eunit/include/eunit.hrl").
 
